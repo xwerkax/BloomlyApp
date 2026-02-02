@@ -1,0 +1,207 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}{{ roslina.nazwa_polska }} - Baza wiedzy{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'baza_roslin_home' %}">Baza wiedzy</a></li>
+<li class="breadcrumb-item active">{{ roslina.nazwa_polska }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'baza_roslin_home' %}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h1>{{ roslina.nazwa_polska }}</h1>
+                    <p class="lead text-muted fst-italic mb-0">{{ roslina.nazwa_naukowa }}</p>
+                </div>
+            </div>
+
+            {% if roslina.autor == user or user.is_staff %}
+                <a href="{% url 'baza_roslin_edytuj' roslina.slug %}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Edytuj
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Zdjęcie -->
+        {% if roslina.zdjecie_glowne %}
+            <img src="{{ roslina.zdjecie_glowne.url }}" class="img-fluid rounded mb-3">
+        {% else %}
+            <div class="bg-light rounded p-5 text-center mb-3">
+                <i class="bi bi-flower1 text-success" style="font-size: 8rem;"></i>
+            </div>
+        {% endif %}
+
+        <!-- Podstawowe info -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> Podstawowe informacje</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Rodzina:</strong> {{ roslina.rodzina|default:"Nieokreślona" }}</p>
+                <p><strong>Rodzaj:</strong> {{ roslina.rodzaj|default:"Nieokreślony" }}</p>
+                <p><strong>Poziom trudności:</strong>
+    <span class="badge
+        {% if roslina.poziom_trudnosci == 'latwy' %}bg-success
+        {% elif roslina.poziom_trudnosci == 'sredni' %}bg-warning
+        {% else %}bg-danger{% endif %}">
+        {{ roslina.get_poziom_trudnosci_display }}
+    </span>
+</p>
+
+{% if roslina.toksyczna_dla_ludzi %}
+    <div class="alert alert-danger py-2">
+        <i class="bi bi-exclamation-triangle"></i> Toksyczna dla ludzi
+    </div>
+{% else %}
+    <div class="alert alert-success py-2">
+        <i class="bi bi-check-circle"></i> Nietoksyczna dla ludzi
+    </div>
+{% endif %}
+
+{% if roslina.toksyczna_dla_zwierzat %}
+    <div class="alert alert-warning py-2">
+        <i class="bi bi-exclamation-triangle"></i> Toksyczna dla zwierząt
+    </div>
+{% else %}
+    <div class="alert alert-success py-2">
+        <i class="bi bi-check-circle"></i> Nietoksyczna dla zwierząt
+    </div>
+{% endif %}
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Opis -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-file-text"></i> Opis</h5>
+            </div>
+            <div class="card-body">
+                {{ roslina.opis_szczegolowy|linebreaks }}
+            </div>
+        </div>
+
+        <!-- Wymagania pielęgnacyjne -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-droplet"></i> Wymagania pielęgnacyjne</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong><i class="bi bi-sun"></i> Światło:</strong><br>
+                        {{ roslina.wymagania_swiatla }}</p>
+
+                        <p><strong><i class="bi bi-droplet"></i> Podlewanie:</strong><br>
+                        {{ roslina.czestotliwosc_podlewania }}</p>
+
+                        {% if roslina.wilgotnosc_powietrza %}
+                            <p><strong><i class="bi bi-moisture"></i> Wilgotność:</strong><br>
+                            {{ roslina.wilgotnosc_powietrza }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        {% if roslina.temperatura_min or roslina.temperatura_max %}
+                            <p><strong><i class="bi bi-thermometer-half"></i> Temperatura:</strong><br>
+                            {% if roslina.temperatura_min %}{{ roslina.temperatura_min }}°C{% endif %}
+                            {% if roslina.temperatura_min and roslina.temperatura_max %} - {% endif %}
+                            {% if roslina.temperatura_max %}{{ roslina.temperatura_max }}°C{% endif %}
+                            </p>
+                        {% endif %}
+
+                        {% if roslina.podloz %}
+                            <p><strong><i class="bi bi-layers"></i> Podłoże:</strong><br>
+                            {{ roslina.podloz }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nawożenie -->
+        {% if roslina.nawozenie %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-bug"></i> Nawożenie</h5>
+            </div>
+            <div class="card-body">
+                {{ roslina.nawozenie|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Rozmnażanie -->
+        {% if roslina.rozmnazanie %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-diagram-3"></i> Rozmnażanie</h5>
+            </div>
+            <div class="card-body">
+                {{ roslina.rozmnazanie|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Choroby i szkodniki -->
+        {% if roslina.choroby_szkodniki %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-shield-exclamation"></i> Choroby i szkodniki</h5>
+            </div>
+            <div class="card-body">
+                {{ roslina.choroby_szkodniki|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ciekawostki -->
+        {% if roslina.ciekawostki %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5><i class="bi bi-lightbulb"></i> Ciekawostki</h5>
+            </div>
+            <div class="card-body">
+                {{ roslina.ciekawostki|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Podobne rośliny -->
+        {% if podobne %}
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-collection"></i> Podobne rośliny</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for podobna in podobne %}
+                        <div class="col-md-6 mb-2">
+                            <a href="{% url 'baza_roslin_szczegoly' podobna.slug %}" class="text-decoration-none">
+                                <div class="border rounded p-2">
+                                    <strong>{{ podobna.nazwa_polska }}</strong><br>
+                                    <small class="text-muted">{{ podobna.nazwa_naukowa }}</small>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

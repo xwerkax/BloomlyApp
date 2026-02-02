@@ -1,0 +1,148 @@
+{% extends 'bloomly/base.html' %}
+{% load avatar_tags %}
+
+{% block title %}{{ post.tytul }} - Forum{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'forum_home' %}">Forum</a></li>
+<li class="breadcrumb-item"><a href="{% url 'forum_kategoria' post.kategoria.slug %}">{{ post.kategoria.nazwa }}</a></li>
+<li class="breadcrumb-item active">{{ post.tytul }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Post -->
+<div class="card mb-4">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        {% if post.wyrozniany %}
+          <span class="badge bg-warning text-dark">Wyróżniony</span>
+        {% endif %}
+        <h2 class="mb-0">{{ post.tytul }}</h2>
+      </div>
+
+      {# BEZ nawiasów: AND > OR #}
+      {% if user.is_authenticated and post.autor_id == user.id or user.is_staff or user.is_superuser %}
+        <div class="d-flex gap-2">
+          <a href="{% url 'forum_edytuj_post' post.slug %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pencil"></i> Edytuj
+          </a>
+          <form method="post" action="{% url 'forum_usun_post' post.slug %}"
+                onsubmit="return confirm('Na pewno usunąć post?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i> Usuń
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card-body">
+    {% if post.zdjecie_glowne %}
+      <img src="{{ post.zdjecie_glowne.url }}" class="img-fluid mb-3 rounded" alt="{{ post.tytul }}">
+    {% endif %}
+    <div class="post-content">
+      {{ post.tresc|linebreaks }}
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <img src="{% avatar_url post.autor 32 %}" class="rounded-circle me-2" alt="{{ post.autor.username }}" width="32" height="32">
+        <strong>{{ post.autor.username }}</strong>
+        <small class="text-muted ms-1">| {{ post.created_at|date:"d.m.Y H:i" }}</small>
+      </div>
+      <div>
+        <span class="badge bg-light text-dark">
+          <i class="bi bi-eye"></i> {{ post.wyswietlenia }}
+        </span>
+        <span class="badge bg-light text-dark">
+          <i class="bi bi-chat"></i> {{ post.liczba_komentarzy }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Komentarze -->
+<div class="card">
+  <div class="card-header">
+    <h4><i class="bi bi-chat"></i> Komentarze ({{ komentarze.count }})</h4>
+  </div>
+
+  <div class="card-body">
+    {% if not post.zablokowany %}
+      {% if user.is_authenticated %}
+        <!-- Formularz komentarza -->
+        <form method="post" class="mb-4" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            {{ komentarz_form.tresc }}
+            {% if komentarz_form.tresc.errors %}
+              <div class="text-danger small mt-1">
+                {% for e in komentarz_form.tresc.errors %}• {{ e }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-send"></i> Dodaj komentarz
+          </button>
+        </form>
+        <hr>
+      {% else %}
+        <div class="alert alert-info">
+          <a href="{% url 'login' %}">Zaloguj się</a>, aby dodać komentarz.
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="alert alert-warning">Komentarze dla tego posta zostały zablokowane.</div>
+    {% endif %}
+
+    <!-- Lista komentarzy -->
+    {% for komentarz in komentarze %}
+      <div class="mb-3 p-3 border rounded">
+        <div class="d-flex justify-content-between mb-2">
+          <div class="d-flex align-items-center">
+            <img src="{% avatar_url komentarz.autor 32 %}" class="rounded-circle me-2" alt="{{ komentarz.autor.username }}" width="32" height="32">
+            <div>
+              <strong>{{ komentarz.autor.username }}</strong><br>
+              <small class="text-muted">{{ komentarz.created_at|date:"d.m.Y H:i" }}</small>
+            </div>
+          </div>
+
+          {# BEZ nawiasów #}
+          {% if user.is_authenticated and komentarz.autor_id == user.id or user.is_staff or user.is_superuser or user.is_authenticated and komentarz.post.autor_id == user.id %}
+            <form method="post" action="{% url 'forum_usun_komentarz' komentarz.pk %}"
+                  onsubmit="return confirm('Na pewno usunąć komentarz?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i> Usuń
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+        <p class="mb-0">{{ komentarz.tresc|linebreaks }}</p>
+
+        {% if komentarz.odpowiedzi.all %}
+          <div class="ms-4 mt-3">
+            {% for odpowiedz in komentarz.odpowiedzi.all %}
+              <div class="mb-2 p-2 bg-light rounded">
+                <img src="{% avatar_url odpowiedz.autor 24 %}" class="rounded-circle me-2" alt="{{ odpowiedz.autor.username }}" width="24" height="24">
+                <strong>{{ odpowiedz.autor.username }}</strong>
+                <small class="text-muted">{{ odpowiedz.created_at|date:"d.m.Y H:i" }}</small>
+                <p class="mb-0 mt-1">{{ odpowiedz.tresc }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-muted text-center py-4">Brak komentarzy. Bądź pierwszy!</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'bloomly/base.html' %}
+
+{# Wyłącz breadcrumbs na stronie rejestracji #}
+{% block show_breadcrumbs %}{% endblock %}
+
+{% block title %}Rejestracja - Bloomly{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h3 class="mb-0">
+          <i class="bi bi-person-plus"></i> Utwórz konto
+        </h3>
+      </div>
+
+      <div class="card-body">
+        {# Błędy ogólne formularza (np. hasła się nie zgadzają) #}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            <ul class="mb-0">
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.username.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.imie.label_tag }}
+              {{ form.imie }}
+              {% if form.imie.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in form.imie.errors %}• {{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.nazwisko.label_tag }}
+              {{ form.nazwisko }}
+              {% if form.nazwisko.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in form.nazwisko.errors %}• {{ error }}<br>{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {% if form.email.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.email.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+            {% if form.password1.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.password1.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+            {% if form.password2.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.password2.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="bi bi-person-plus"></i> Zarejestruj się
+            </button>
+          </div>
+
+          <div class="text-center mt-3">
+            <p>Masz już konto?
+              <a href="{% url 'login' %}" class="text-success">Zaloguj się</a>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

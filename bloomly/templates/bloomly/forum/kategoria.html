@@ -1,0 +1,82 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}{{ kategoria.nazwa }} - Forum{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'forum_home' %}">Forum</a></li>
+<li class="breadcrumb-item active">{{ kategoria.nazwa }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'forum_home' %}" class="btn btn-outline-secondary me-3">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1><i class="bi {{ kategoria.ikona }}"></i> {{ kategoria.nazwa }}</h1>
+                <p class="text-muted mb-0">{{ kategoria.opis }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'forum_dodaj_post' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nowy post
+        </a>
+    </div>
+</div>
+
+<!-- Lista postów -->
+{% if posty %}
+    {% for post in posty %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex">
+                    {% if post.zdjecie_glowne %}
+                        <img src="{{ post.zdjecie_glowne.url }}"
+                             class="me-3 rounded"
+                             style="width: 100px; height: 100px; object-fit: cover;">
+                    {% endif %}
+
+                    <div class="flex-grow-1">
+                        {% if post.wyrozniany %}
+                            <span class="badge bg-warning text-dark">Wyróżniony</span>
+                        {% endif %}
+
+                        <h5>
+                            <a href="{% url 'forum_post' post.slug %}" class="text-decoration-none">
+                                {{ post.tytul }}
+                            </a>
+                        </h5>
+
+                        <p class="mb-2">{{ post.tresc|truncatewords:40 }}</p>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-person"></i> {{ post.autor.username }} |
+                                <i class="bi bi-calendar"></i> {{ post.created_at|date:"d.m.Y H:i" }}
+                            </small>
+
+                            <div>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-chat"></i> {{ post.liczba_komentarzy }}
+                                </span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-eye"></i> {{ post.wyswietlenia }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-chat text-muted" style="font-size: 5rem;"></i>
+        <h3 class="text-muted mt-3">Brak postów w tej kategorii</h3>
+        <a href="{% url 'forum_dodaj_post' %}" class="btn btn-success">Dodaj pierwszy post</a>
+    </div>
+{% endif %}
+{% endblock %}

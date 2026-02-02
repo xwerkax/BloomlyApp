@@ -1,0 +1,30 @@
+/* plant.css */
+.badge-custom {
+  display: inline-block;
+  padding: .35rem .6rem;
+  font-size: .75rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: .375rem;
+  vertical-align: middle;
+}
+
+/* Twoje kolory z !important */
+.badge-nawozenie {
+  background: #f48fb1 !important; /* różowy */
+  color: #000000 !important;
+}
+.badge-przycinanie {
+  background: #ff8a65 !important; /* pomarańcz */
+  color: #000000 !important;
+}
+.badge-przesadzanie {
+  background: #a1887f !important; /* brąz */
+  color: #ffffff !important;
+}
+
+/* Fallback */
+.badge-default {
+  background: #6b7280 !important;
+  color: #ffffff !important;
+}

@@ -1,0 +1,288 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Analiza ML - {{ roslina.nazwa }} - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'lista_roslin' %}">Moje rośliny</a></li>
+<li class="breadcrumb-item"><a href="{% url 'szczegoly_rosliny' roslina.id %}">{{ roslina.nazwa }}</a></li>
+<li class="breadcrumb-item active">Analiza ML</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="d-flex align-items-center">
+      <a href="{% url 'szczegoly_rosliny' roslina.id %}" class="btn btn-outline-secondary me-3">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h1><i class="bi bi-graph-up"></i> Analiza ML: {{ roslina.nazwa }}</h1>
+        <p class="text-muted mb-0">Algorytm uczenia maszynowego analizuje Twoje wzorce pielęgnacji</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Rekomendacje -->
+<div class="row mb-4">
+  <div class="col-lg-6">
+    <div class="card border-{% if analiza.pewnosc_rekomendacji >= 0.7 %}success{% elif analiza.pewnosc_rekomendacji >= 0.5 %}warning{% else %}secondary{% endif %}">
+      <div class="card-header bg-{% if analiza.pewnosc_rekomendacji >= 0.7 %}success{% elif analiza.pewnosc_rekomendacji >= 0.5 %}warning{% else %}secondary{% endif %} text-white">
+        <h5 class="mb-0"><i class="bi bi-robot"></i> Rekomendacje ML</h5>
+      </div>
+      <div class="card-body">
+        <h3 class="text-center mb-3">
+          Podlewaj co <strong>{{ analiza.rekomendowana_czestotliwosc|default:roslina.czestotliwosc_podlewania }}</strong> dni
+        </h3>
+
+        {# Główna (łączna) pewność rekomendacji #}
+        <div class="progress mb-2" style="height: 30px;">
+          {% widthratio analiza.pewnosc_rekomendacji 1 100 as percent %}
+          <div class="progress-bar bg-{% if analiza.pewnosc_rekomendacji >= 0.7 %}success{% elif analiza.pewnosc_rekomendacji >= 0.5 %}warning{% else %}secondary{% endif %}"
+               role="progressbar" style="width: {{ percent }}%;">
+          </div>
+        </div>
+        <div class="small text-muted text-center mb-3">
+          Wiarygodność rekomendacji: {{ analiza.pewnosc_rekomendacji|floatformat:2 }}
+        </div>
+
+        {% if analiza.rekomendowana_czestotliwosc and analiza.rekomendowana_czestotliwosc != roslina.czestotliwosc_podlewania %}
+          <div class="alert alert-info">
+            <strong>Porównanie:</strong><br>
+            Aktualnie: <strong>{{ roslina.czestotliwosc_podlewania }}</strong> dni<br>
+            Rekomendacja ML: <strong>{{ analiza.rekomendowana_czestotliwosc }}</strong> dni
+          </div>
+
+          {# Próg obniżony z 0.6 do 0.5 i z 8 do 6 podlań #}
+          {% if analiza.pewnosc_rekomendacji >= 0.5 and analiza.liczba_podlan >= 6 %}
+            <form method="post">
+              {% csrf_token %}
+              <button type="submit" name="zastosuj" class="btn btn-success w-100">
+                <i class="bi bi-check-circle"></i> Zastosuj rekomendację automatycznie
+              </button>
+            </form>
+          {% else %}
+            <div class="alert alert-warning">
+              {% if analiza.liczba_podlan < 6 %}
+                Potrzeba minimum 6 podlań (masz: {{ analiza.liczba_podlan }})
+              {% else %}
+                Łączna pewność za niska ({{ analiza.pewnosc_rekomendacji|floatformat:2 }} < 0.50)
+              {% endif %}
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> Aktualna częstotliwość jest zgodna z rekomendacją ML.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Statystyki – uproszczone -->
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-bar-chart"></i> Statystyki</h5>
+      </div>
+      <div class="card-body">
+
+        <div class="row text-center mb-3">
+          <div class="col-4">
+            <h4 class="text-primary">{{ analiza.liczba_podlan|default:"–" }}</h4>
+            <small class="text-muted">Liczba podlań</small>
+          </div>
+          <div class="col-4">
+            <h4 class="text-success">
+              {% if wzorce.srednia %}{{ wzorce.srednia|floatformat:1 }} dni{% else %}–{% endif %}
+            </h4>
+            <small class="text-muted">Średnio co</small>
+          </div>
+          <div class="col-4">
+            <h4 class="text-info">
+              {% if wzorce.mediana %}{{ wzorce.mediana }} dni{% else %}–{% endif %}
+            </h4>
+            <small class="text-muted">Mediana</small>
+          </div>
+        </div>
+
+        <!-- Regularność podlewania (opis słowny) -->
+        {% if wzorce.odchylenie %}
+          {% if wzorce.odchylenie < 2 %}
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted">Regularność podlewania:</span>
+              <span class="badge bg-success">Bardzo regularnie</span>
+            </div>
+          {% elif wzorce.odchylenie < 4 %}
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted">Regularność podlewania:</span>
+              <span class="badge bg-info text-dark">Dość regularnie</span>
+            </div>
+          {% else %}
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted">Regularność podlewania:</span>
+              <span class="badge bg-warning text-dark">Nieregularnie</span>
+            </div>
+          {% endif %}
+        {% endif %}
+
+        <hr>
+
+        <!-- Informacje o modelu ML - BEZ próbek treningowych -->
+        <div class="row">
+          <div class="col-12">
+            <div class="small text-muted">Model</div>
+<div>
+  {{ wzorce.typ_modelu|default:"Statystyczny (backup)" }}
+  {% if wzorce.typ_modelu == "GB" %}
+    <span class="badge bg-info" data-bs-toggle="tooltip" title="Gradient Boosting">GB</span>
+  {% elif wzorce.typ_modelu == "RF" %}
+    <span class="badge bg-success" data-bs-toggle="tooltip" title="Random Forest">RF</span>
+  {% endif %}
+</div>
+          </div>
+        </div>
+
+        {# Cross-validation MAE jeśli dostępne #}
+        {% if wzorce.cv_mae %}
+          <div class="mt-2 small">
+            <div class="text-muted">Błąd predykcji (CV):</div>
+            <div>
+              <span class="badge bg-{% if wzorce.cv_mae < 1.5 %}success{% elif wzorce.cv_mae < 2.5 %}warning{% else %}danger{% endif %}">
+                {{ wzorce.cv_mae|floatformat:2 }} dni
+              </span>
+              <span class="text-muted" data-bs-toggle="tooltip" title="Cross-validation MAE - średni błąd na wielu próbach">
+                <i class="bi bi-info-circle"></i>
+              </span>
+            </div>
+          </div>
+        {% elif wzorce.mae or wzorce.rmse %}
+          <div class="mt-2 small text-muted">
+            {% if wzorce.mae %}MAE: {{ wzorce.mae|floatformat:2 }} dnia{% endif %}
+            {% if wzorce.mae and wzorce.rmse %} • {% endif %}
+            {% if wzorce.rmse %}RMSE: {{ wzorce.rmse|floatformat:2 }} dnia{% endif %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pory podlewania -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-clock"></i> Twoje nawyki – pory podlewania</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-4">
+            <div class="card {% if pory.preferowana_pora == 'rano' %}border-success{% endif %}">
+              <div class="card-body">
+                <h3>{{ pory.rano }}</h3>
+                <p class="mb-0">🌅 Rano (6–12)</p>
+                {% if pory.preferowana_pora == 'rano' %}
+                  <span class="badge bg-success">Preferowana</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card {% if pory.preferowana_pora == 'popoludniu' %}border-success{% endif %}">
+              <div class="card-body">
+                <h3>{{ pory.popoludniu }}</h3>
+                <p class="mb-0">☀️ Popołudniu (12–18)</p>
+                {% if pory.preferowana_pora == 'popoludniu' %}
+                  <span class="badge bg-success">Preferowana</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card {% if pory.preferowana_pora == 'wieczorem' %}border-success{% endif %}">
+              <div class="card-body">
+                <h3>{{ pory.wieczorem }}</h3>
+                <p class="mb-0">🌙 Wieczorem (18–24)</p>
+                {% if pory.preferowana_pora == 'wieczorem' %}
+                  <span class="badge bg-success">Preferowana</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Wskazówki dla poprawy - PRZENIESIONE WYŻEJ -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card border-info">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Jak poprawić dokładność AI?</h5>
+      </div>
+      <div class="card-body">
+        <ul class="mb-0">
+          {% if analiza.liczba_podlan < 15 %}
+          <li><strong>Zbieraj więcej danych:</strong> Masz {{ analiza.liczba_podlan }} podlań. Po 15+ podlewaniach model będzie znacznie dokładniejszy!</li>
+          {% endif %}
+
+          {% if wzorce.pewnosc_regularnosci and wzorce.pewnosc_regularnosci < 0.7 %}
+          <li><strong>Podlewaj regularnie:</strong> Twoja regularność to {{ wzorce.pewnosc_regularnosci|floatformat:2 }}. Im bardziej regularnie podlewasz, tym lepiej AI przewiduje!</li>
+          {% endif %}
+
+          {% if wzorce.pewnosc_gleby and wzorce.pewnosc_gleby < 0.6 %}
+          <li><strong>Zapisuj stan gleby:</strong> Pomaga to modelowi zrozumieć, kiedy roślina naprawdę potrzebuje wody.</li>
+          {% endif %}
+
+          {% if wzorce.pewnosc_wody and wzorce.pewnosc_wody < 0.6 %}
+          <li><strong>Notuj ilość wody:</strong> Konsekwentne podlewanie podobną ilością wody zwiększa pewność rekomendacji.</li>
+          {% endif %}
+
+          {% if analiza.pewnosc_rekomendacji >= 0.7 %}
+          <li class="text-success"><strong>Świetna robota! 🎉</strong> Twoje dane są wysokiej jakości, model ma wysoką pewność.</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Historia interwałów - POKAZUJE SIĘ PO WSKAZÓWKACH -->
+{% if wzorce.interwaly and wzorce.interwaly|length > 0 %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="bi bi-calendar-range"></i> Historia interwałów między podlewaniami</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          {% for interwal in wzorce.interwaly %}
+            <span class="badge bg-{% if interwal <= roslina.czestotliwosc_podlewania %}success{% elif interwal <= roslina.czestotliwosc_podlewania|add:3 %}warning{% else %}danger{% endif %} fs-6">
+              {{ interwal }} dni
+            </span>
+          {% endfor %}
+        </div>
+        <small class="text-muted mt-2 d-block">
+          🟢 Zielony = w normie | 🟡 Żółty = małe opóźnienie | 🔴 Czerwony = duże opóźnienie
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+// Inicjalizacja tooltipów Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+});
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Odłóż przypomnienie - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'lista_przypomnie' %}">Przypomnienia</a></li>
+<li class="breadcrumb-item active">Odłóż</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h3 class="mb-0">
+                    <i class="bi bi-clock"></i> Odłóż przypomnienie
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- Info o przypomnieniu -->
+                <div class="mb-4">
+                    <h4>{{ przypomnienie.tytul }}</h4>
+                    <p class="text-muted">{{ przypomnienie.roslina.nazwa }} ({{ przypomnienie.roslina.gatunek }})</p>
+                    <p>{{ przypomnienie.tresc|truncatewords:20 }}</p>
+
+                    <div class="alert alert-info">
+                        <strong>Aktualna data przypomnienia:</strong> {{ przypomnienie.data_przypomnienia|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+
+                <!-- Formularz -->
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="dni" class="form-label">
+                            <i class="bi bi-calendar-plus"></i> O ile dni odłożyć?
+                        </label>
+                        <select name="dni" id="dni" class="form-select">
+                            <option value="1">1 dzień</option>
+                            <option value="2">2 dni</option>
+                            <option value="3">3 dni</option>
+                            <option value="7" selected>1 tydzień</option>
+                            <option value="14">2 tygodnie</option>
+                        </select>
+                        <div class="form-text">Przypomnienie zostanie przeniesione na wybraną liczbę dni do przodu</div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-info-circle"></i> Co się stanie?</h6>
+                        <ul class="mb-0">
+                            <li>Data przypomnienia zostanie przesunięta</li>
+                            <li>Status zmieni się na "Odłożone"</li>
+                            <li>Będziesz mógł/mogła je wykonać później</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'szczegoly_przypomnienia' przypomnienie.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-clock"></i> Odłóż przypomnienie
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Edytuj {{ roslina.nazwa }} - Bloomly{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h3 class="mb-0">
+                    <i class="bi bi-pencil"></i> Edytuj roślinę: {{ roslina.nazwa }}
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Błędy formularza -->
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Błędy w formularzu:</strong>
+                            <ul class="mb-0">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <!-- Aktualne zdjęcie -->
+                    {% if roslina.zdjecie %}
+                        <div class="mb-3">
+                            <label class="form-label">Aktualne zdjęcie:</label>
+                            <div>
+                                <img src="{{ roslina.zdjecie.url }}"
+                                     class="img-thumbnail"
+                                     style="max-width: 200px;">
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <!-- Nazwa rośliny -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nazwa.id_for_label }}" class="form-label">
+                                <i class="bi bi-tag"></i> {{ form.nazwa.label }} *
+                            </label>
+                            {{ form.nazwa }}
+                        </div>
+
+                        <!-- Gatunek -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.gatunek.id_for_label }}" class="form-label">
+                                <i class="bi bi-info-circle"></i> {{ form.gatunek.label }} *
+                            </label>
+                            {{ form.gatunek }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Kategoria -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.kategoria.id_for_label }}" class="form-label">
+                                <i class="bi bi-grid"></i> {{ form.kategoria.label }} *
+                            </label>
+                            {{ form.kategoria }}
+                        </div>
+
+                        <!-- Poziom trudności -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.poziom_trudnosci.id_for_label }}" class="form-label">
+                                <i class="bi bi-speedometer2"></i> {{ form.poziom_trudnosci.label }}
+                            </label>
+                            {{ form.poziom_trudnosci }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Data zakupu -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.data_zakupu.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar"></i> {{ form.data_zakupu.label }} *
+                            </label>
+                            {{ form.data_zakupu }}
+                        </div>
+
+                        <!-- Lokalizacja -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.lokalizacja.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt"></i> {{ form.lokalizacja.label }}
+                            </label>
+                            {{ form.lokalizacja }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Częstotliwość podlewania -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.czestotliwosc_podlewania.id_for_label }}" class="form-label">
+                                <i class="bi bi-droplet"></i> {{ form.czestotliwosc_podlewania.label }}
+                            </label>
+                            {{ form.czestotliwosc_podlewania }}
+                        </div>
+
+                        <!-- Ostatnie podlewanie -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.ostatnie_podlewanie.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-check"></i> {{ form.ostatnie_podlewanie.label }}
+                            </label>
+                            {{ form.ostatnie_podlewanie }}
+                        </div>
+                    </div>
+
+                    <!-- Nowe zdjęcie -->
+                    <div class="mb-3">
+                        <label for="{{ form.zdjecie.id_for_label }}" class="form-label">
+                            <i class="bi bi-camera"></i> {{ form.zdjecie.label }}
+                        </label>
+                        {{ form.zdjecie }}
+                        <div class="form-text">Zostaw puste jeśli nie chcesz zmieniać zdjęcia</div>
+                    </div>
+
+                    <!-- Notatki -->
+                    <div class="mb-3">
+                        <label for="{{ form.notatki.id_for_label }}" class="form-label">
+                            <i class="bi bi-journal-text"></i> {{ form.notatki.label }}
+                        </label>
+                        {{ form.notatki }}
+                    </div>
+
+                    <!-- Przyciski -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'szczegoly_rosliny' roslina.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Zapisz zmiany
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

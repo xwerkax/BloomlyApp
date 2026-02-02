@@ -1,0 +1,139 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Dodaj roślinę - Bloomly{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h3 class="mb-0">
+          <i class="bi bi-plus-circle"></i> Dodaj nową roślinę
+        </h3>
+      </div>
+
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          {# Błędy ogólne #}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {# Błędy pól #}
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              <strong>Błędy w formularzu:</strong>
+              <ul class="mb-0">
+                {% for field, errors in form.errors.items %}
+                  {% for error in errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <div class="row">
+            <!-- Nazwa rośliny -->
+            <div class="col-md-6 mb-3">
+              {{ form.nazwa.label_tag }}
+              {{ form.nazwa }}
+              {% if form.nazwa.help_text %}
+                <div class="form-text">{{ form.nazwa.help_text }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Gatunek -->
+            <div class="col-md-6 mb-3">
+              {{ form.gatunek.label_tag }}
+              {{ form.gatunek }}
+              {% if form.gatunek.help_text %}
+                <div class="form-text">{{ form.gatunek.help_text }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Kategoria -->
+            <div class="col-md-6 mb-3">
+              {{ form.kategoria.label_tag }}
+              {{ form.kategoria }}
+            </div>
+
+            <!-- Poziom trudności -->
+            <div class="col-md-6 mb-3">
+              {{ form.poziom_trudnosci.label_tag }}
+              {{ form.poziom_trudnosci }}
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Data zakupu -->
+            <div class="col-md-6 mb-3">
+              {{ form.data_zakupu.label_tag }}
+              {{ form.data_zakupu }}
+            </div>
+
+            <!-- Lokalizacja -->
+            <div class="col-md-6 mb-3">
+              {{ form.lokalizacja.label_tag }}
+              {{ form.lokalizacja }}
+              {% if form.lokalizacja.help_text %}
+                <div class="form-text">{{ form.lokalizacja.help_text }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Częstotliwość podlewania -->
+            <div class="col-md-6 mb-3">
+              {{ form.czestotliwosc_podlewania.label_tag }}
+              {{ form.czestotliwosc_podlewania }}
+              <div class="form-text">Co ile dni podlewać roślinę</div>
+            </div>
+
+            <!-- Ostatnie podlewanie -->
+            <div class="col-md-6 mb-3">
+              {{ form.ostatnie_podlewanie.label_tag }}
+              {{ form.ostatnie_podlewanie }}
+              <div class="form-text">Opcjonalne — jeśli pamiętasz</div>
+            </div>
+          </div>
+
+          <!-- Zdjęcie -->
+          <div class="mb-3">
+            {{ form.zdjecie.label_tag }}
+            {{ form.zdjecie }}
+            <div class="form-text">Dodaj zdjęcie swojej rośliny</div>
+          </div>
+
+          <!-- Notatki -->
+          <div class="mb-3">
+            {{ form.notatki.label_tag }}
+            {{ form.notatki }}
+            {% if form.notatki.help_text %}
+              <div class="form-text">{{ form.notatki.help_text }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Przyciski -->
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'lista_roslin' %}" class="btn btn-secondary">
+              <i class="bi bi-x-circle"></i> Anuluj
+            </a>
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle"></i> Zapisz roślinę
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

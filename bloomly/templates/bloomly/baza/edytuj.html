@@ -1,0 +1,164 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Edytuj {{ roslina.nazwa_polska }} - Baza wiedzy{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'baza_roslin_home' %}">Baza wiedzy</a></li>
+<li class="breadcrumb-item"><a href="{% url 'baza_roslin_szczegoly' roslina.slug %}">{{ roslina.nazwa_polska }}</a></li>
+<li class="breadcrumb-item active">Edytuj</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h3 class="mb-0"><i class="bi bi-pencil"></i> Edytuj: {{ roslina.nazwa_polska }}</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Błędy w formularzu:</strong>
+                            <ul class="mb-0">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <h4 class="border-bottom pb-2 mb-3">Podstawowe informacje</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nazwa polska *</label>
+                            {{ form.nazwa_polska }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nazwa naukowa *</label>
+                            {{ form.nazwa_naukowa }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Rodzina</label>
+                            {{ form.rodzina }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Rodzaj</label>
+                            {{ form.rodzaj }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Krótki opis *</label>
+                        {{ form.opis_krotki }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Szczegółowy opis *</label>
+                        {{ form.opis_szczegolowy }}
+                    </div>
+
+                    <h4 class="border-bottom pb-2 mb-3 mt-4">Wymagania pielęgnacyjne</h4>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Poziom trudności *</label>
+                            {{ form.poziom_trudnosci }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Światło *</label>
+                            {{ form.wymagania_swiatla }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Podlewanie *</label>
+                            {{ form.czestotliwosc_podlewania }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Wilgotność</label>
+                            {{ form.wilgotnosc_powietrza }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Temp. min (°C)</label>
+                            {{ form.temperatura_min }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Temp. max (°C)</label>
+                            {{ form.temperatura_max }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Podłoże</label>
+                        {{ form.podloz }}
+                    </div>
+
+                    <h4 class="border-bottom pb-2 mb-3 mt-4">Dodatkowe informacje</h4>
+                    <div class="mb-3">
+                        <label class="form-label">Nawożenie</label>
+                        {{ form.nawozenie }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Rozmnażanie</label>
+                        {{ form.rozmnazanie }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Choroby i szkodniki</label>
+                        {{ form.choroby_szkodniki }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ciekawostki</label>
+                        {{ form.ciekawostki }}
+                    </div>
+
+                    <h4 class="border-bottom pb-2 mb-3 mt-4">Ostrzeżenia</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.toksyczna_dla_ludzi }}
+                                <label class="form-check-label">Toksyczna dla ludzi</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.toksyczna_dla_zwierzat }}
+                                <label class="form-check-label">Toksyczna dla zwierząt</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if roslina.zdjecie_glowne %}
+                        <div class="mb-3">
+                            <label class="form-label">Aktualne zdjęcie:</label>
+                            <div>
+                                <img src="{{ roslina.zdjecie_glowne.url }}" class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Nowe zdjęcie (zostaw puste aby nie zmieniać)</label>
+                        {{ form.zdjecie_glowne }}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'baza_roslin_szczegoly' roslina.slug %}" class="btn btn-secondary">Anuluj</a>
+                        <button type="submit" class="btn btn-warning">Zapisz zmiany</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

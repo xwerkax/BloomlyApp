@@ -1,0 +1,150 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Przypomnienia - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'home' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Przypomnienia</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1"><i class="bi bi-bell"></i> Moje przypomnienia</h1>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'ustawienia_przypomnie' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-gear"></i> Ustawienia
+    </a>
+  </div>
+</div>
+
+<div class="btn-group mb-3" role="group" aria-label="Widok">
+  <a href="?view=upcoming" class="btn {% if mode != 'done' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    <i class="bi bi-calendar-event"></i> Nadchodzące
+    <span class="badge bg-light text-dark ms-1">{{ counts.upcoming }}</span>
+  </a>
+  <a href="?view=done" class="btn {% if mode == 'done' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    <i class="bi bi-check2-circle"></i> Wykonane
+    <span class="badge bg-light text-dark ms-1">{{ counts.done }}</span>
+  </a>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-muted small">Wszystkie</div>
+        <div class="display-6">{{ counts.all }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-muted small">Nadchodzące</div>
+        <div class="display-6">{{ counts.upcoming }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-muted small">Wykonane</div>
+        <div class="display-6">{{ counts.done }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if przypomnienia %}
+  <div class="vstack gap-3">
+    {% for p in przypomnienia %}
+      <div class="card shadow-sm">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">
+              <i class="bi bi-droplet"></i>
+              Podlej {{ p.roslina.nazwa }}
+              {% if p.wyslane %}
+                <span class="badge bg-info ms-2">wysłane</span>
+              {% endif %}
+              {% if p.status == 'oczekujace' and p.data_przypomnienia < now %}
+                <span class="badge bg-danger ms-1">po terminie</span>
+              {% endif %}
+            </div>
+
+            <div class="text-muted small">
+              {% if p.roslina.gatunek %}{{ p.roslina.gatunek }}{% endif %}
+            </div>
+
+            <!-- DYNAMICZNY OPIS Z ML -->
+            <div class="small mt-1 text-muted">
+              {% with dni=p.dni_do_przypomnienia %}
+                {% if dni == 0 %}
+                  <strong class="text-warning">Dzisiaj!</strong>
+                {% elif dni == 1 %}
+                  Za 1 dzień.
+                {% elif dni < 0 %}
+                  <strong class="text-danger">Spóźnione!</strong>
+                {% else %}
+                  Za {{ dni }} dni.
+                {% endif %}
+              {% endwith %}
+
+              <!-- Typ modelu ML -->
+{% if p.roslina.analiza %}
+  {% with analiza=p.roslina.analiza %}
+    Źródło:
+    {% if analiza.typ_modelu == 'GB' %}
+      <strong class="text-primary">Gradient Boosting</strong>
+    {% elif analiza.typ_modelu == 'RF' %}
+      <strong class="text-success">Random Forest</strong>
+    {% else %}
+      {{ analiza.get_typ_modelu_display }}
+    {% endif %}
+  {% endwith %}
+{% else %}
+  Źródło: Ustawienia domyślne.
+{% endif %}
+</div>
+
+
+          </div>
+
+          <div class="text-end">
+            {% if mode == 'done' %}
+              <div class="mb-1">
+                <span class="text-muted small">Wykonane:</span>
+                <strong>{{ p.data_wykonania|date:"d.m.Y H:i" }}</strong>
+              </div>
+              <span class="badge bg-success">
+                <i class="bi bi-check2"></i> Wykonane
+              </span>
+            {% else %}
+              <div class="mb-1">
+                <span class="text-muted small">Kiedy:</span>
+                <strong>{{ p.data_przypomnienia|date:"d.m.Y H:i" }}</strong>
+              </div>
+              <a href="{% url 'wykonaj_przypomnienie' p.id %}" class="btn btn-sm btn-success">
+                <i class="bi bi-check2-circle"></i> Oznacz jako wykonane
+              </a>
+            {% endif %}
+            <a href="{% url 'szczegoly_przypomnienia' p.id %}" class="btn btn-sm btn-outline-primary ms-2">
+              <i class="bi bi-eye"></i> Szczegóły
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-center text-muted py-5">
+    {% if mode == 'done' %}
+      Brak wykonanych przypomnień.
+    {% else %}
+      Brak nadchodzących przypomnień.
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

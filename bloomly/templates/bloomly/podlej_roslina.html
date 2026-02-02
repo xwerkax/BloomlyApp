@@ -1,0 +1,115 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Podlej {{ roslina.nazwa }} - Bloomly{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">
+          <i class="bi bi-droplet"></i> Podlej roślinę
+        </h3>
+      </div>
+
+      <div class="card-body">
+        <!-- Info o roślinie -->
+        <div class="text-center mb-4">
+          {% if roslina.zdjecie %}
+            <img src="{{ roslina.zdjecie.url }}" class="img-thumbnail mb-3" style="max-width: 150px;" alt="Zdjęcie rośliny">
+          {% else %}
+            <i class="bi bi-flower1 text-primary mb-3" style="font-size: 4rem;"></i>
+          {% endif %}
+
+          <h4 class="mb-1">{{ roslina.nazwa }}</h4>
+          <p class="text-muted mb-2">{{ roslina.gatunek }}</p>
+
+          {% if roslina.ostatnie_podlewanie %}
+            <p class="mb-0"><strong>Ostatnie podlewanie:</strong> {{ roslina.ostatnie_podlewanie|date:"d.m.Y" }}</p>
+            <p class="text-muted"><strong>Dni temu:</strong> {{ roslina.dni_od_podlewania }}</p>
+          {% else %}
+            <p class="text-muted mb-0">Brak danych o poprzednim podlewaniu</p>
+          {% endif %}
+        </div>
+
+        <!-- Status -->
+        {% if roslina.czy_potrzebuje_podlewania %}
+          <div class="alert alert-warning d-flex align-items-start">
+            <i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+            <div>Ta roślina potrzebuje podlewania!</div>
+          </div>
+        {% else %}
+          <div class="alert alert-info d-flex align-items-start">
+            <i class="bi bi-info-circle me-2 mt-1"></i>
+            <div>Ta roślina była niedawno podlewana, ale możesz dodać dodatkowe podlewanie.</div>
+          </div>
+        {% endif %}
+
+        <!-- Formularz -->
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <!-- Błędy ogólne -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Błędy pól -->
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              <strong>Błędy w formularzu:</strong>
+              <ul class="mb-0">
+                {% for field, errors in form.errors.items %}
+                  {% for error in errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <!-- Data podlewania -->
+          <div class="mb-3">
+            {{ form.data.label_tag }} *
+            {{ form.data }}
+            <div class="form-text">Kiedy podlałeś/podlałaś roślinę?</div>
+          </div>
+
+          <!-- Stan gleby (NOWE) -->
+          <div class="mb-3">
+            {{ form.stan_gleby.label_tag }}
+            {{ form.stan_gleby }}
+            <div class="form-text">sucha / lekko wilgotna / mokra (opcjonalnie)</div>
+          </div>
+
+          <!-- Ilość wody (NOWE) -->
+          <div class="mb-3">
+            {{ form.ilosc_wody.label_tag }}
+            {{ form.ilosc_wody }}
+            <div class="form-text">mało / średnio / dużo (opcjonalnie)</div>
+          </div>
+
+          <!-- Notatki -->
+          <div class="mb-3">
+            {{ form.notatki.label_tag }}
+            {{ form.notatki }}
+            <div class="form-text">Opcjonalne uwagi o podlewaniu</div>
+          </div>
+
+          <!-- Przyciski -->
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'szczegoly_rosliny' roslina.id %}" class="btn btn-secondary">
+              <i class="bi bi-x-circle"></i> Anuluj
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-droplet"></i> Zapisz podlewanie
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}{{ przypomnienie.tytul }} - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'lista_przypomnie' %}">Przypomnienia</a></li>
+<li class="breadcrumb-item active">{{ przypomnienie.tytul }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'lista_przypomnie' %}" class="btn btn-outline-secondary me-3" title="Powrót do przypomnień">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="mb-0">
+    {% if przypomnienie.typ == 'podlewanie' %}
+        <i class="bi bi-droplet text-primary"></i>
+    {% else %}
+        <i class="bi bi-bell text-secondary"></i>
+    {% endif %}
+    {{ przypomnienie.tytul }}
+</h1>
+
+                <p class="lead text-muted mb-0">{{ przypomnienie.roslina.nazwa }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if przypomnienie.status == 'oczekujace' %}
+    <div class="btn-group" role="group">
+        <a href="{% url 'wykonaj_przypomnienie' przypomnienie.id %}" class="btn btn-success">
+            <i class="bi bi-check-circle"></i> Wykonane
+        </a>
+        <a href="{% url 'odloz_przypomnienie' przypomnienie.id %}" class="btn btn-warning">
+            <i class="bi bi-clock"></i> Odłóż
+        </a>
+    </div>
+{% endif %}
+
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Szczegóły przypomnienia -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> Szczegóły przypomnienia</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Treść:</strong></p>
+                <p>{{ przypomnienie.tresc|linebreaks }}</p>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Typ:</strong> {{ przypomnienie.get_typ_display }}</p>
+                        <p><strong>Status:</strong>
+    <span class="badge
+        {% if przypomnienie.status == 'oczekujace' %}bg-warning
+        {% elif przypomnienie.status == 'wykonane' %}bg-success
+        {% else %}bg-dark{% endif %}">
+        {{ przypomnienie.get_status_display }}
+    </span>
+</p>
+
+
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Data przypomnienia:</strong> {{ przypomnienie.data_przypomnienia|date:"d.m.Y H:i" }}</p>
+                        <p><strong>Utworzone:</strong> {{ przypomnienie.data_utworzenia|date:"d.m.Y H:i" }}</p>
+                        {% if przypomnienie.data_wyslania %}
+                            <p><strong>Wysłane:</strong> {{ przypomnienie.data_wyslania|date:"d.m.Y H:i" }}</p>
+                        {% endif %}
+                        {% if przypomnienie.data_wykonania %}
+                            <p><strong>Wykonane:</strong> {{ przypomnienie.data_wykonania|date:"d.m.Y H:i" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if przypomnienie.powtarzalne and przypomnienie.interwal_dni %}
+    <div class="alert alert-info">
+        <i class="bi bi-arrow-repeat"></i>
+        Rekomendowany interwał podlewania: co {{ przypomnienie.interwal_dni }} dni (na podstawie analizy ML).
+    </div>
+{% endif %}
+
+
+                {% if przypomnienie.automatyczne %}
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-robot"></i>
+                        To przypomnienie zostało utworzone automatycznie.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Info o roślinie -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-flower1"></i> Roślina</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if przypomnienie.roslina.zdjecie %}
+                    <img src="{{ przypomnienie.roslina.zdjecie.url }}"
+                         class="img-fluid rounded mb-3"
+                         style="max-height: 200px;">
+                {% else %}
+                    <div class="bg-light rounded p-4 mb-3">
+                        <i class="bi bi-flower1 text-success" style="font-size: 4rem;"></i>
+                    </div>
+                {% endif %}
+
+                <h5>{{ przypomnienie.roslina.nazwa }}</h5>
+                <p class="text-muted">{{ przypomnienie.roslina.gatunek }}</p>
+
+                {% if przypomnienie.roslina.lokalizacja %}
+                    <p><i class="bi bi-geo-alt"></i> {{ przypomnienie.roslina.lokalizacja }}</p>
+                {% endif %}
+
+                <a href="{% url 'szczegoly_rosliny' przypomnienie.roslina.id %}"
+                   class="btn btn-outline-success">
+                    <i class="bi bi-eye"></i> Zobacz roślinę
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'bloomly/base.html' %}
+{% block title %}Oznacz jako wykonane - {{ roslina.nazwa }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-xl-6">
+    <div class="card shadow">
+      <div class="card-header bg-success text-white">
+        <h3 class="mb-0"><i class="bi bi-check2-circle"></i> Oznacz jako wykonane</h3>
+      </div>
+      <div class="card-body">
+
+        <h4 class="mb-1">Podlej {{ roslina.nazwa }}</h4>
+        <p class="text-muted mb-3">{{ roslina.gatunek }}</p>
+
+        <div class="mb-3 p-3 bg-light border rounded">
+          <div><strong>Data przypomnienia:</strong> {{ przypomnienie.data_przypomnienia|date:"d.m.Y H:i" }}</div>
+          <div><strong>Typ:</strong> {{ przypomnienie.get_typ_display }}</div>
+          {% if roslina.ostatnie_podlewanie %}
+            <div class="mt-2 text-muted">Ostatnie podlewanie: {{ roslina.ostatnie_podlewanie|date:"d.m.Y" }}</div>
+          {% endif %}
+        </div>
+
+       <div class="alert alert-info">
+  <i class="bi bi-info-circle"></i>
+  <strong>Co się stanie?</strong>
+  <ul class="mb-0">
+    <li>Zapiszemy czynność podlewania z wybraną datą i godziną.</li>
+    <li>Zamkniemy to przypomnienie jako <em>wykonane</em>.</li>
+    <li>Zaktualizujemy datę ostatniego podlewania rośliny.</li>
+    {% if przypomnienie.powtarzalne and przypomnienie.interwal_dni %}
+      <li>System utworzy kolejne przypomnienie na podstawie analizy ML (aktualny interwał: ok. co {{ przypomnienie.interwal_dni }} dni).</li>
+    {% else %}
+      <li>System utworzy kolejne przypomnienie o podlewaniu na podstawie analizy ML.</li>
+    {% endif %}
+  </ul>
+</div>
+
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            <strong>Błędy w formularzu:</strong>
+            <ul class="mb-0">
+              {% for field, errors in form.errors.items %}
+                {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            {{ form.data.label_tag }}
+            {{ form.data }}
+            <div class="form-text">Wybierz faktyczną datę i godzinę podlewania.</div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.stan_gleby.label_tag }}
+            {{ form.stan_gleby }}
+            <div class="form-text">sucha / lekko wilgotna / mokra (opcjonalnie)</div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.ilosc_wody.label_tag }}
+            {{ form.ilosc_wody }}
+            <div class="form-text">mało / średnio / dużo (opcjonalnie)</div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.notatki.label_tag }}
+            {{ form.notatki }}
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'szczegoly_rosliny' roslina.id %}" class="btn btn-secondary">
+              <i class="bi bi-x-circle"></i> Anuluj
+            </a>
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check2"></i> Tak, wykonane
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

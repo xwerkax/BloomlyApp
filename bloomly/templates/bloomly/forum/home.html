@@ -1,0 +1,142 @@
+{% extends 'bloomly/base.html' %}
+{% load avatar_tags %}
+
+{% block title %}Forum - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active" aria-current="page">Forum</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-chat-left-text"></i> Forum Bloomly</h1>
+  <a href="{% url 'forum_dodaj_post' %}" class="btn btn-success">
+    <i class="bi bi-plus-circle"></i> Nowy post
+  </a>
+</div>
+
+<!-- Pasek filtrów -->
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-md-4">
+    <label for="filter-kategoria" class="form-label mb-1">
+      <i class="bi bi-folder"></i> Kategoria
+    </label>
+    <select id="filter-kategoria" name="k" class="form-select">
+      <option value="">Wszystkie kategorie</option>
+      {% for kat in kategorie_glowne %}
+        {% if selected_k == kat.slug %}
+          <option value="{{ kat.slug }}" selected="selected">{{ kat.nazwa }}</option>
+        {% else %}
+          <option value="{{ kat.slug }}">{{ kat.nazwa }}</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-4">
+  <label for="filter-sort" class="form-label mb-1">
+    <i class="bi bi-sort-down"></i> Sortowanie
+  </label>
+  <select id="filter-sort" name="sort" class="form-select">
+    {% if sort == "new" %}
+      <option value="new" selected="selected">Najnowsze</option>
+    {% else %}
+      <option value="new">Najnowsze</option>
+    {% endif %}
+
+    {% if sort == "old" %}
+      <option value="old" selected="selected">Najstarsze</option>
+    {% else %}
+      <option value="old">Najstarsze</option>
+    {% endif %}
+
+    {% if sort == "popular" %}
+      <option value="popular" selected="selected">Najpopularniejsze</option>
+    {% else %}
+      <option value="popular">Najpopularniejsze</option>
+    {% endif %}
+  </select>
+</div>
+
+
+  <div class="col-md-4">
+    <button type="submit" class="btn btn-primary w-100">
+      <i class="bi bi-funnel"></i> Zastosuj
+    </button>
+  </div>
+</form>
+
+<!-- Feed postów -->
+{% if page_obj.object_list %}
+  <div class="vstack gap-3">
+    {% for p in page_obj.object_list %}
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <a class="text-decoration-none" href="{% url 'forum_post' p.slug %}">
+                <h2 class="h5 mb-1">{{ p.tytul }}</h2>
+              </a>
+              <div class="text-muted small">
+                <img src="{% avatar_url p.autor 20 %}" class="rounded-circle me-1" alt="">
+                <span class="me-2">{{ p.autor.username }}</span>
+                <span>{{ p.created_at|date:"d.m.Y H:i" }}</span>
+                {% if p.kategoria %}
+                  <span class="ms-2 badge bg-light text-dark">
+                    <i class="bi bi-folder"></i> {{ p.kategoria.nazwa }}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="text-nowrap">
+              {% if p.wyswietlenia is not None %}
+                <span class="badge bg-light text-dark me-1">
+                  <i class="bi bi-eye"></i> {{ p.wyswietlenia }}
+                </span>
+              {% endif %}
+              <span class="badge bg-light text-dark">
+                <i class="bi bi-chat"></i> {{ p.num_comments }}
+              </span>
+            </div>
+          </div>
+
+          {% if p.zdjecie_glowne %}
+            <img src="{{ p.zdjecie_glowne.url }}" class="img-fluid rounded mt-2" alt="">
+          {% endif %}
+
+          {% if p.tresc %}
+            <p class="mt-2 mb-0 text-body">{{ p.tresc|striptags|truncatewords:40 }}</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Paginacja -->
+  <nav class="mt-3" aria-label="Nawigacja stron forum">
+    <ul class="pagination justify-content-center mb-0">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&k={{ selected_k }}">«</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">«</span></li>
+      {% endif %}
+
+      <li class="page-item disabled">
+        <span class="page-link">Strona {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      </li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&k={{ selected_k }}">»</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">»</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+{% else %}
+  <div class="text-center text-muted py-5">Brak postów.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Kalendarz pielęgnacji - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Kalendarz pielęgnacji</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-12">
+    <h1><i class="bi bi-calendar"></i> Kalendarz pielęgnacji</h1>
+  </div>
+</div>
+
+<!-- Legenda -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <strong>Legenda:</strong>
+        <!-- Przypomnienia -->
+        <span class="badge" style="background:#ffcc33;">Oczekujące</span>
+        <span class="badge" style="background:#43a047;">Wykonane</span>
+        <span class="badge" style="background:#7986cb;">Odłożone</span>
+        <span class="mx-2">|</span>
+        <!-- Historia -->
+        <span class="badge" style="background:#38B0DE;">Podlewanie</span>
+        <span class="badge" style="background:#f48fb1;">Nawożenie</span>
+        <span class="badge" style="background:#ff8a65;">Przycinanie</span>
+        <span class="badge" style="background:#a1887f;">Przesadzanie</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Kalendarz -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Utnij długie tytuły w widoku miesiąca */
+  .fc .fc-daygrid-event .fc-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px; /* desktop */
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  /* trochę ciaśniej na tabletach */
+  @media (max-width: 1200px) {
+    .fc .fc-daygrid-event .fc-event-title { max-width: 140px; }
+  }
+  /* jeszcze ciaśniej na mobilu */
+  @media (max-width: 768px) {
+    .fc .fc-daygrid-event .fc-event-title { max-width: 100px; }
+  }
+</style>
+
+
+<!-- FullCalendar -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/pl.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const REMINDER_COLORS = {
+    oczekujace: '#ffcc33', // Oczekujące
+    wyslane:    '#81c784', // Wysłane
+    wykonane:   '#43a047', // Wykonane
+    odlozone:   '#7986cb', // Odłożone
+  };
+
+  const HISTORY_COLORS = {
+    podlewanie:  '#38B0DE',
+    nawozenie:   '#f48fb1',
+    przycinanie: '#ff8a65',
+    przesadzanie:'#a1887f',
+    _default:    '#CED4DA',
+  };
+
+  const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'dayGridMonth',
+    locale: 'pl',
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
+    events: '{% url "kalendarz_events_json" %}',
+
+    // NADAWANIE KOLORÓW
+    eventDataTransform: function(ev) {
+      // U nas:
+      // - przypomnienia: extendedProps.kind === "reminder", extendedProps.status = "oczekujace"/"wykonane"/...
+      // - historia: extendedProps.kind === "history", extendedProps.typ = "podlewanie"/"nawozenie"/...
+
+      const ext = ev.extendedProps || {};
+      let bg = ev.backgroundColor;
+      let text = ev.textColor || '#000';
+
+      if (ext.kind === 'history') {
+        const typ = ext.typ || '_default';
+        const c = HISTORY_COLORS[typ] || HISTORY_COLORS._default;
+        bg = c;
+        text = '#ffffff';
+      } else if (ext.kind === 'reminder' && ext.status && REMINDER_COLORS[ext.status]) {
+        bg = REMINDER_COLORS[ext.status];
+        text = (ext.status === 'oczekujace') ? '#000000' : '#ffffff';
+      }
+
+      if (bg) {
+        ev.backgroundColor = bg;
+        ev.borderColor = bg;
+        ev.textColor = text;
+      }
+      return ev;
+    },
+
+    eventDisplay: 'block',
+    displayEventTime: true,
+    eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    height: 'auto'
+  });
+
+  calendar.render();
+});
+</script>
+
+
+
+{% endblock %}

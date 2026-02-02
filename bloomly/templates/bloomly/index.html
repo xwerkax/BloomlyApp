@@ -1,0 +1,137 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Dashboard - Bloomly{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <!-- Dashboard dla zalogowanych użytkowników -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-house-door"></i> Twój ogród domowy</h1>
+            <p class="lead">Witaj z powrotem, {{ user.first_name|default:user.username }}!</p>
+        </div>
+    </div>
+
+    <!-- Statystyki -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3><i class="bi bi-flower1"></i> {{ liczba_roslin }}</h3>
+                    <p class="mb-0">Twoich roślin</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3><i class="bi bi-droplet"></i> {{ rosliny_do_podlania }}</h3>
+                    <p class="mb-0">Do podlania</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3><i class="bi bi-calendar-check"></i> {{ ostatnie_czynnosci|length }}</h3>
+                    <p class="mb-0">Ostatnich czynności</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+   <!-- Szybkie akcje -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-lightning"></i> Szybkie akcje</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="/rosliny/dodaj/" class="btn btn-success w-100">
+                            <i class="bi bi-plus-circle"></i> Dodaj roślinę
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/rosliny/" class="btn btn-outline-success w-100">
+                            <i class="bi bi-list"></i> Wszystkie rośliny
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/przypomnienia/" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-bell"></i> Przypomnienia
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/kalendarz/" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-calendar3"></i> Kalendarz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    {% if ostatnie_czynnosci %}
+        <!-- Ostatnie czynności -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-clock-history"></i> Ostatnie czynności</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for czynnosc in ostatnie_czynnosci %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ czynnosc.get_typ_display }}</strong> - {{ czynnosc.roslina.nazwa }}
+                                    {% if czynnosc.notatki %}
+                                        <br><small class="text-muted">{{ czynnosc.notatki|truncatewords:10 }}</small>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ czynnosc.data|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            {% if not forloop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+{% else %}
+    <!-- Strona dla niezalogowanych -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="bg-success text-white rounded p-4 mb-4">
+                <h1><i class="bi bi-flower1"></i> Witaj w Bloomly!</h1>
+                <p class="lead">Aplikacja do inteligentnej pielęgnacji Twoich roślin</p>
+                <p>Zaloguj się aby rozpocząć pielęgnację swoich zielonych przyjaciół</p>
+                <a href="{% url 'rejestracja' %}" class="btn btn-light btn-lg">
+                    <i class="bi bi-person-plus"></i> Zarejestruj się teraz
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5>💡 Czy wiesz, że...</h5>
+                </div>
+                <div class="card-body">
+                    <p>Rośliny doniczkowe oczyszczają powietrze w Twoim domu?</p>
+                    <small class="text-muted">Monstera i Sansewieria to naturalne filtry!</small>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

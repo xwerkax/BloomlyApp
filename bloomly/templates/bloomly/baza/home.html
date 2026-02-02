@@ -1,0 +1,142 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Baza wiedzy - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Baza wiedzy</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="bi bi-book"></i> Baza wiedzy o roślinach</h1>
+        <p class="text-muted">Encyklopedia roślin doniczkowych</p>
+    </div>
+    <div class="col-md-4 text-end">
+        {% if user.is_authenticated %}
+            <a href="{% url 'baza_roslin_dodaj' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Dodaj roślinę
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Wyszukiwarka -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-search"></i> Wyszukiwarka</h5>
+            </div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.query.label }}</label>
+                            {{ form.query }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ form.poziom_trudnosci.label }}</label>
+                            {{ form.poziom_trudnosci }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ form.toksyczna.label }}</label>
+                            {{ form.toksyczna }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{{ form.sortowanie.label }}</label>
+                            {{ form.sortowanie }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-search"></i> Szukaj
+                                </button>
+                                <a href="{% url 'baza_roslin_home' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Wyczyść
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wyniki -->
+<div class="row mb-3">
+    <div class="col-12">
+        <h5>Znaleziono: {{ liczba_wynikow }} roślin</h5>
+    </div>
+</div>
+
+<!-- Lista roślin -->
+{% if rosliny %}
+    <div class="row">
+        {% for roslina in rosliny %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    {% if roslina.zdjecie_glowne %}
+                        <img src="{{ roslina.zdjecie_glowne.url }}"
+                             class="card-img-top"
+                             style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                             style="height: 200px;">
+                            <i class="bi bi-flower1 text-success" style="font-size: 4rem;"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h5 class="card-title">{{ roslina.nazwa_polska }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted fst-italic">{{ roslina.nazwa_naukowa }}</small>
+                        </p>
+                        <p class="card-text">{{ roslina.opis_krotki|truncatewords:20 }}</p>
+
+                        <div class="mb-2">
+    <span class="badge
+        {% if roslina.poziom_trudnosci == 'latwy' %}bg-success
+        {% elif roslina.poziom_trudnosci == 'sredni' %}bg-warning
+        {% else %}bg-danger{% endif %}">
+        {{ roslina.get_poziom_trudnosci_display }}
+    </span>
+
+    {% if roslina.toksyczna_dla_ludzi or roslina.toksyczna_dla_zwierzat %}
+        <span class="badge bg-danger">
+            <i class="bi bi-exclamation-triangle"></i> Toksyczna
+        </span>
+    {% else %}
+        <span class="badge bg-success">
+            <i class="bi bi-check-circle"></i> Nietoksyczna
+        </span>
+    {% endif %}
+</div>
+
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="bi bi-droplet"></i> {{ roslina.czestotliwosc_podlewania }}<br>
+                                <i class="bi bi-sun"></i> {{ roslina.wymagania_swiatla }}
+                            </small>
+                        </p>
+                    </div>
+
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'baza_roslin_szczegoly' roslina.slug %}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-eye"></i> Zobacz więcej
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-book text-muted" style="font-size: 5rem;"></i>
+        <h3 class="text-muted mt-3">Nie znaleziono roślin</h3>
+        <p class="text-muted">Spróbuj zmienić kryteria wyszukiwania</p>
+    </div>
+{% endif %}
+{% endblock %}

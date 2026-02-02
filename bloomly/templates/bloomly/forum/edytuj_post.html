@@ -1,0 +1,87 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Edytuj post - Forum{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'forum_home' %}">Forum</a></li>
+<li class="breadcrumb-item"><a href="{% url 'forum_post' post.slug %}">{{ post.tytul }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Edytuj</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow">
+      <div class="card-header bg-warning text-dark">
+        <h3 class="mb-0"><i class="bi bi-pencil"></i> Edytuj post</h3>
+      </div>
+      <div class="card-body">
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            <ul class="mb-0">
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            {{ form.tytul.label_tag }}
+            {{ form.tytul }}
+            {% if form.tytul.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.tytul.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.kategoria.label_tag }}
+            {{ form.kategoria }}
+            {% if form.kategoria.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.kategoria.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.tresc.label_tag }}
+            {{ form.tresc }}
+            {% if form.tresc.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.tresc.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.zdjecie_glowne.label_tag }}
+            {{ form.zdjecie_glowne }}
+            {% if form.zdjecie_glowne.errors %}
+              <div class="text-danger small mt-1">
+                {% for error in form.zdjecie_glowne.errors %}• {{ error }}<br>{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'forum_post' post.slug %}" class="btn btn-secondary">
+              Anuluj
+            </a>
+            <button type="submit" class="btn btn-warning">
+              Zapisz zmiany
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Zmień hasło - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'profil' %}">Mój profil</a></li>
+<li class="breadcrumb-item active" aria-current="page">Zmień hasło</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white">
+        <h3 class="h5 mb-0"><i class="bi bi-key"></i> Zmień hasło</h3>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'profil' %}" class="btn btn-outline-secondary">Anuluj</a>
+            <button type="submit" class="btn btn-secondary">Zapisz</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

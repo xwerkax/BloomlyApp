@@ -1,0 +1,56 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Usuń {{ roslina.nazwa }} - Bloomly{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Usuń roślinę
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    {% if roslina.zdjecie %}
+                        <img src="{{ roslina.zdjecie.url }}"
+                             class="img-thumbnail mb-3"
+                             style="max-width: 150px;">
+                    {% else %}
+                        <i class="bi bi-flower1 text-muted mb-3" style="font-size: 5rem;"></i>
+                    {% endif %}
+
+                    <h4>{{ roslina.nazwa }}</h4>
+                    <p class="text-muted">{{ roslina.gatunek }}</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Uwaga!</h5>
+                    <p class="mb-0">
+                        Czy na pewno chcesz usunąć tę roślinę?
+                        Ta akcja jest <strong>nieodwracalna</strong> i usunie również:
+                    </p>
+                    <ul class="mt-2 mb-0">
+                        <li>Całą historię pielęgnacji</li>
+                        <li>Wszystkie czynności związane z rośliną</li>
+                        <li>Zdjęcia rośliny</li>
+                    </ul>
+                </div>
+
+                <form method="post" class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    {% csrf_token %}
+
+                    <a href="{% url 'szczegoly_rosliny' roslina.id %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Anuluj
+                    </a>
+
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Tak, usuń roślinę
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

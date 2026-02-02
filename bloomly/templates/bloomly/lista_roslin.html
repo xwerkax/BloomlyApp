@@ -1,0 +1,123 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Moje rośliny - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Moje rośliny</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary me-3" title="Powrót do dashboard">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h1 class="mb-0"><i class="bi bi-flower1"></i> Moje rośliny</h1>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'dodaj_roslina' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Dodaj nową roślinę
+        </a>
+    </div>
+</div>
+
+<!-- Wyszukiwanie -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="get" class="d-flex">
+            <input type="search"
+                   name="search"
+                   class="form-control me-2"
+                   placeholder="Szukaj roślin..."
+                   value="{{ search }}">
+            <button type="submit" class="btn btn-outline-success">
+                <i class="bi bi-search"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Lista roślin -->
+{% if rosliny %}
+    <div class="row">
+        {% for roslina in rosliny %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    {% if roslina.zdjecie %}
+                        <img src="{{ roslina.zdjecie.url }}"
+                             class="card-img-top"
+                             style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                             style="height: 200px;">
+                            <i class="bi bi-flower1 text-success" style="font-size: 3rem;"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h5 class="card-title">{{ roslina.nazwa }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">{{ roslina.gatunek }}</small><br>
+                            <span class="badge bg-secondary">{{ roslina.get_kategoria_display }}</span>
+                            <span class="badge bg-info">{{ roslina.get_poziom_trudnosci_display }}</span>
+                        </p>
+
+                        {% if roslina.lokalizacja %}
+                            <p class="card-text">
+                                <i class="bi bi-geo-alt"></i> {{ roslina.lokalizacja }}
+                            </p>
+                        {% endif %}
+
+                        <!-- Status podlewania -->
+{% if roslina.czy_potrzebuje_podlewania %}
+    <div class="alert alert-warning py-2">
+        <i class="bi bi-droplet"></i> Potrzebuje podlewania!
+    </div>
+{% endif %}
+
+                    </div>
+
+                    <div class="card-footer bg-transparent">
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'szczegoly_rosliny' roslina.id %}"
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'podlej_roslina' roslina.id %}"
+                               class="btn btn-outline-success">
+                                <i class="bi bi-droplet"></i>
+                            </a>
+                            <a href="{% url 'edytuj_roslina' roslina.id %}"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-flower1 text-muted" style="font-size: 5rem;"></i>
+        <h3 class="text-muted mt-3">
+            {% if search %}
+                Nie znaleziono roślin pasujących do "{{ search }}"
+            {% else %}
+                Nie masz jeszcze żadnych roślin
+            {% endif %}
+        </h3>
+        <p class="text-muted">
+            {% if search %}
+                <a href="{% url 'lista_roslin' %}" class="btn btn-outline-secondary">Pokaż wszystkie rośliny</a>
+            {% else %}
+                <a href="{% url 'dodaj_roslina' %}" class="btn btn-success">Dodaj swoją pierwszą roślinę</a>
+            {% endif %}
+        </p>
+    </div>
+{% endif %}
+{% endblock %}

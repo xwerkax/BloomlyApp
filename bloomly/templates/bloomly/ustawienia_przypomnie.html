@@ -1,0 +1,63 @@
+{% extends 'bloomly/base.html' %}
+
+{% block title %}Ustawienia przypomnień - Bloomly{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'lista_przypomnie' %}">Przypomnienia</a></li>
+<li class="breadcrumb-item active">Ustawienia</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h3 class="mb-0">
+                    <i class="bi bi-gear"></i> Ustawienia przypomnień
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Powiadomienia email -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5><i class="bi bi-envelope"></i> Powiadomienia email</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-3">
+                                <input type="checkbox"
+                                       name="email"
+                                       class="form-check-input"
+                                       id="email-switch"
+                                       {% if user.profiluzytkownika.powiadomienia_email %}checked{% endif %}>
+                                <label class="form-check-label" for="email-switch">
+                                    Wysyłaj przypomnienia na email
+                                </label>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong>Twój email:</strong> {{ user.email }}<br>
+                                <small>Email będzie wysyłany na godzinę przed przypomnieniem</small>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+                    <!-- Przyciski -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'lista_przypomnie' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Anuluj
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Zapisz ustawienia
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
