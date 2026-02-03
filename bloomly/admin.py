@@ -4,7 +4,6 @@ from .models import (
     Kategoria, Post, Komentarz, BazaRoslin, AnalizaPielegnacji
 )
 
-# Proste rejestracje
 admin.site.register(ProfilUzytkownika)
 admin.site.register(Roslina)
 admin.site.register(CzynoscPielegnacyjna)
@@ -14,8 +13,6 @@ admin.site.register(Post)
 admin.site.register(Komentarz)
 admin.site.register(BazaRoslin)
 
-
-# Zaawansowana rejestracja dla AnalizaPielegnacji
 @admin.register(AnalizaPielegnacji)
 class AnalizaPielegnacjiAdmin(admin.ModelAdmin):
     list_display = [
@@ -25,13 +22,13 @@ class AnalizaPielegnacjiAdmin(admin.ModelAdmin):
         'pewnosc_rekomendacji',
         'typ_modelu',
         'liczba_podlan',
-        'data_aktualizacji'  # POPRAWIONE z ostatnia_aktualizacja
+        'data_aktualizacji'  
     ]
     list_filter = [
         'uzytkownik',
         'typ_modelu',
         'pewnosc_rekomendacji',
-        'data_aktualizacji'  # POPRAWIONE z ostatnia_aktualizacja
+        'data_aktualizacji' 
     ]
     search_fields = [
         'roslina__nazwa',
@@ -39,8 +36,8 @@ class AnalizaPielegnacjiAdmin(admin.ModelAdmin):
         'uzytkownik__username'
     ]
     readonly_fields = [
-        'data_utworzenia',  # POPRAWIONE z utworzono
-        'data_aktualizacji'  # POPRAWIONE z ostatnia_aktualizacja
+        'data_utworzenia',  
+        'data_aktualizacji'  
     ]
 
     fieldsets = (
