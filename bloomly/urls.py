@@ -1,9 +1,9 @@
-from django.urls import path, reverse_lazy  # uwaga: bez include
+from django.urls import path, reverse_lazy  
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 
-from . import views  # bo widoki są w tej samej aplikacji/pakiecie
+from . import views  
 
 urlpatterns = [
 
@@ -62,7 +62,6 @@ urlpatterns = [
     path("rosliny/<int:id>/oznacz-podlanie/", views.oznacz_podlanie, name="oznacz_podlanie"),
 ]
 
-# Serwowanie plików mediów w DEV (avatary itd.)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
