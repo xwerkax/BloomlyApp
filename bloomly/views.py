@@ -13,9 +13,6 @@ from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.contrib.auth.models import User
 
-
-
-# Modele
 from .models import (
     ProfilUzytkownika,
     Roslina,
@@ -28,7 +25,6 @@ from .models import (
     AnalizaPielegnacji,
 )
 
-# Formularze
 from .forms import (
     RejestracjaForm,
     ProfilForm,
@@ -42,7 +38,6 @@ from .forms import (
     WykonajPrzypomnienieForm,
 )
 
-# ML Utils
 from .ml_utils import zaktualizuj_analize_rosliny
 
 logger = logging.getLogger(__name__)
@@ -55,14 +50,12 @@ logger = logging.getLogger(__name__)
 def strona_glowna(request):
     """Strona główna - dashboard użytkownika"""
     if request.user.is_authenticated:
-        # Statystyki dla zalogowanego użytkownika
         rosliny = Roslina.objects.filter(wlasciciel=request.user, is_active=True)
         rosliny_do_podlania = [r for r in rosliny if r.czy_potrzebuje_podlewania()]
         ostatnie_czynnosci = CzynoscPielegnacyjna.objects.filter(
             uzytkownik=request.user
         ).order_by('-data')[:5]
 
-        # Przypomnienia
         pilne_przypomnienia = Przypomnienie.objects.filter(
             uzytkownik=request.user,
             status__in=['oczekujace', 'wyslane'],
@@ -110,25 +103,21 @@ def profil(request):
     if request.method == "POST":
         form = ProfilForm(request.POST, request.FILES, instance=profil)
 
-        # Pobierz dane z formularza
         username = request.POST.get("username", "").strip()
         email = request.POST.get("email", "").strip()
         first_name = request.POST.get("first_name", "").strip()
         last_name = request.POST.get("last_name", "").strip()
 
-        # Walidacja username (unikalność)
         if username and username != request.user.username:
             if User.objects.filter(username=username).exists():
                 messages.error(request, f"Nazwa użytkownika '{username}' jest już zajęta.")
                 return render(request, "bloomly/profil.html", {"form": form, "profil": profil})
 
-        # Walidacja email (unikalność)
         if email and email != request.user.email:
             if User.objects.filter(email=email).exists():
                 messages.error(request, f"Email '{email}' jest już używany przez inne konto.")
                 return render(request, "bloomly/profil.html", {"form": form, "profil": profil})
 
-        # Zapisz dane User
         if username:
             request.user.username = username
         if email:
@@ -136,18 +125,18 @@ def profil(request):
         request.user.first_name = first_name
         request.user.last_name = last_name
 
-        # Zapisz profil
         if form.is_valid():
             form.save()
             request.user.save()
-            messages.success(request, "✅ Profil został zaktualizowany pomyślnie!")
+            messages.success(request, "Profil został zaktualizowany pomyślnie!")
             return redirect("profil")
         else:
-            messages.error(request, "❌ Popraw błędy w formularzu.")
+            messages.error(request, "Popraw błędy w formularzu.")
     else:
         form = ProfilForm(instance=profil)
 
     return render(request, "bloomly/profil.html", {"form": form, "profil": profil})
+
 # ============================================
 # ROŚLINY - CRUD
 # ============================================
@@ -157,7 +146,6 @@ def lista_roslin(request):
     """Lista wszystkich roślin użytkownika"""
     rosliny = Roslina.objects.filter(wlasciciel=request.user, is_active=True)
 
-    # Wyszukiwanie
     search = request.GET.get('search')
     if search:
         rosliny = rosliny.filter(
@@ -200,7 +188,6 @@ def _days_since(d):
 def szczegoly_rosliny(request, id):
     roslina = get_object_or_404(Roslina, pk=id, wlasciciel=request.user)
 
-    # Historia pielęgnacji
     historia = (
         CzynoscPielegnacyjna.objects
         .filter(roslina=roslina)
@@ -279,7 +266,6 @@ def podlej_roslina(request, id):
                 ev.data = timezone.now()
             ev.save()
 
-            # ONE-OPEN - odśwież przypomnienie
             try:
                 from .models import utworz_przypomnienie_podlewanie
                 nowe_przyp = utworz_przypomnienie_podlewanie(roslina)
@@ -288,7 +274,7 @@ def podlej_roslina(request, id):
             except Exception as e:
                 logger.error(f"Błąd tworzenia przypomnienia po podlewaniu: {e}")
 
-            # Aktualizacja analizy ML
+         
             try:
                 liczba_podlan = CzynoscPielegnacyjna.objects.filter(
                     roslina=roslina, typ='podlewanie', wykonane=True
@@ -329,9 +315,7 @@ def dodaj_czynnosc(request, id):
 
             ev.save()
 
-            # Dodatkowa logika tylko dla podlewania
             if ev.typ == "podlewanie":
-                # ONE-OPEN - odśwież przypomnienie
                 try:
                     from .models import utworz_przypomnienie_podlewanie
                     nowe_przyp = utworz_przypomnienie_podlewanie(roslina)
@@ -341,7 +325,7 @@ def dodaj_czynnosc(request, id):
                 except Exception as e:
                     logger.error(f"Błąd tworzenia przypomnienia: {e}")
 
-                # Aktualizacja analizy ML
+            
                 try:
                     liczba_podlan = CzynoscPielegnacyjna.objects.filter(
                         roslina=roslina,
@@ -380,7 +364,7 @@ def oznacz_podlanie(request, id):
     roslina = get_object_or_404(Roslina, id=id, wlasciciel=request.user)
 
     try:
-        # Utwórz czynność podlewania
+       
         czynnosc = CzynoscPielegnacyjna.objects.create(
             roslina=roslina,
             uzytkownik=request.user,
@@ -390,11 +374,11 @@ def oznacz_podlanie(request, id):
             notatki="Szybkie podlanie"
         )
 
-        # Aktualizuj datę ostatniego podlewania
+      
         roslina.ostatnie_podlewanie = timezone.now().date()
         roslina.save()
 
-        # Aktualizuj analizę ML
+       
         liczba_podlan = CzynoscPielegnacyjna.objects.filter(
             roslina=roslina,
             typ='podlewanie',
@@ -410,7 +394,7 @@ def oznacz_podlanie(request, id):
             except Exception as e:
                 logger.error(f"Błąd ML: {e}")
 
-        # ONE-OPEN - odśwież przypomnienie
+     
         try:
             from .models import utworz_przypomnienie_podlewanie
             utworz_przypomnienie_podlewanie(roslina)
@@ -498,7 +482,7 @@ def wykonaj_przypomnienie(request, id):
             woda = form.cleaned_data.get("ilosc_wody") or None
             notatki = form.cleaned_data.get("notatki", "")
 
-            # 1) Zapisz czynność podlewania
+       
             cz = CzynoscPielegnacyjna.objects.create(
                 roslina=roslina,
                 uzytkownik=request.user,
@@ -510,13 +494,12 @@ def wykonaj_przypomnienie(request, id):
                 wykonane=True,
             )
 
-            # 2) Zamknij przypomnienie
             przyp.status = "wykonane"
             przyp.data_wykonania = dt
             przyp.wyslane = True
             przyp.save(update_fields=["status", "data_wykonania", "wyslane"])
 
-            # 3) ONE-OPEN - utwórz nowe przypomnienie ZAWSZE synchronicznie
+            
             from .models import utworz_przypomnienie_podlewanie
 
             nowe_przypomnienie = None
@@ -532,7 +515,7 @@ def wykonaj_przypomnienie(request, id):
             except Exception as e:
                 logger.error(f"Błąd tworzenia przypomnienia dla {roslina.nazwa}: {e}")
 
-            # 4) ML - aktualizacja analizy
+        
             try:
                 liczba_podlan = CzynoscPielegnacyjna.objects.filter(
                     roslina=roslina, typ="podlewanie", wykonane=True
@@ -543,7 +526,7 @@ def wykonaj_przypomnienie(request, id):
             except Exception as e:
                 logger.error(f"Błąd ML po wykonaniu przypomnienia: {e}")
 
-            # Komunikat sukcesu
+           
             if nowe_przypomnienie:
                 messages.success(
                     request,
@@ -614,12 +597,10 @@ def forum_home(request):
         .annotate(num_comments=Count("komentarz"))
     )
 
-    # Filtr po kategorii głównej
     k = request.GET.get("k")
     if k:
         posty = posty.filter(Q(kategoria__slug=k) | Q(kategoria__rodzic__slug=k))
 
-    # Sortowanie
     sort = request.GET.get("sort", "new")
     if sort == "old":
         posty = posty.order_by("created_at")
@@ -631,7 +612,6 @@ def forum_home(request):
     else:
         posty = posty.order_by("-created_at")
 
-    # Paginacja
     paginator = Paginator(posty, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
@@ -660,14 +640,12 @@ def forum_post(request, slug):
     """Szczegóły posta + komentarze"""
     post = get_object_or_404(Post, slug=slug)
 
-    # Licznik wyświetleń
     session_key = f"seen_post_{post.pk}"
     if not request.session.get(session_key, False):
         Post.objects.filter(pk=post.pk).update(wyswietlenia=F("wyswietlenia") + 1)
         request.session[session_key] = True
         post.refresh_from_db(fields=["wyswietlenia"])
 
-    # Dodanie komentarza
     if request.method == "POST" and request.user.is_authenticated and not getattr(post, "zablokowany", False):
         form = KomentarzForm(request.POST)
         if form.is_valid():
@@ -824,11 +802,9 @@ def baza_roslin_szczegoly(request, slug):
     """Szczegóły rośliny z bazy"""
     roslina = get_object_or_404(BazaRoslin, slug=slug)
 
-    # Zwiększ licznik wyświetleń
     roslina.wyswietlenia += 1
     roslina.save(update_fields=['wyswietlenia'])
 
-    # Podobne rośliny
     podobne = BazaRoslin.objects.filter(
         rodzina=roslina.rodzina
     ).exclude(id=roslina.id)[:4]
@@ -890,29 +866,27 @@ def baza_roslin_edytuj(request, slug):
 def analiza_ml_rosliny(request, id):
     roslina = get_object_or_404(Roslina, pk=id, wlasciciel=request.user)
 
-    # Pobierz lub utwórz analizę
     analiza, created = AnalizaPielegnacji.objects.get_or_create(
         roslina=roslina,
         defaults={'uzytkownik': request.user}
     )
 
-    # Pobierz historię podlewań
+
     podlewania = CzynoscPielegnacyjna.objects.filter(
         roslina=roslina,
         typ='podlewanie'
     ).order_by('data')
 
-    # Oblicz interwały między podlewaniami
+
     interwaly = []
     if podlewania.count() >= 2:
         podlewania_list = list(podlewania.values_list('data', flat=True))
         for i in range(1, len(podlewania_list)):
             dni = (podlewania_list[i] - podlewania_list[i - 1]).days
-            if 0 < dni <= 60:  # Filtruj outliery
+            if 0 < dni <= 60: 
                 interwaly.append(dni)
 
-    # Oblicz statystyki
-    # Oblicz statystyki
+    
     wzorce = {}
     if interwaly:
         import statistics
@@ -923,9 +897,8 @@ def analiza_ml_rosliny(request, id):
     else:
         wzorce['interwaly'] = []
 
-    # Dodaj informacje z analizy ML (jeśli istnieją)
-    # Dodaj informacje z analizy ML (jeśli istnieją)
-    if analiza.typ_modelu:  # ← POPRAWIONE
+   
+    if analiza.typ_modelu:  
         wzorce['typ_modelu'] = analiza.typ_modelu
         wzorce['n_samples'] = analiza.liczba_podlan
         wzorce['cv_mae'] = analiza.cv_mae
@@ -933,12 +906,12 @@ def analiza_ml_rosliny(request, id):
         wzorce['rmse'] = analiza.rmse
         wzorce['r2'] = analiza.r2_score
 
-        # Składowe pewności
+ 
         wzorce['pewnosc_modelu'] = analiza.pewnosc_model
         wzorce['pewnosc_regularnosci'] = analiza.pewnosc_regularnosc
         wzorce['pewnosc_gleby'] = analiza.pewnosc_biologia
         wzorce['pewnosc_wody'] = analiza.pewnosc_biologia
-    # Oblicz pory podlewania
+
     podlewania_z_godzinami = CzynoscPielegnacyjna.objects.filter(
         roslina=roslina,
         typ='podlewanie'
@@ -960,7 +933,6 @@ def analiza_ml_rosliny(request, id):
         elif 18 <= godzina < 24:
             pory['wieczorem'] += 1
 
-    # Znajdź preferowaną porę
     max_count = max(pory['rano'], pory['popoludniu'], pory['wieczorem'])
     if max_count > 0:
         if pory['rano'] == max_count:
@@ -970,7 +942,6 @@ def analiza_ml_rosliny(request, id):
         elif pory['wieczorem'] == max_count:
             pory['preferowana_pora'] = 'wieczorem'
 
-    # Obsługa formularza zastosowania rekomendacji
     if request.method == 'POST' and 'zastosuj' in request.POST:
         if analiza.rekomendowana_czestotliwosc:
             roslina.czestotliwosc_podlewania = analiza.rekomendowana_czestotliwosc
@@ -982,7 +953,7 @@ def analiza_ml_rosliny(request, id):
     context = {
         'roslina': roslina,
         'analiza': analiza,
-        'wzorce': wzorce,  # ← Zawiera 'interwaly'!
+        'wzorce': wzorce, 
         'pory': pory,
     }
 
@@ -1006,7 +977,6 @@ def dashboard_analityczny(request):
             'analiza': analiza,
         })
 
-    # Statystyki ogólne
     total_podlania = CzynoscPielegnacyjna.objects.filter(
         uzytkownik=request.user,
         typ='podlewanie',
@@ -1105,7 +1075,6 @@ def kalendarz_events_json(request):
         "_default": ("#CED4DA", "#CED4DA", "#1F2D3D"),
     }
 
-    # Przypomnienia
     ALLOWED_STATUSES = {"oczekujace", "wyslane", "odlozone"}
     reminder_date_fields = ["data_przypomnienia", "termin", "data", "scheduled_for", "due_at", "due_on"]
 
@@ -1149,7 +1118,7 @@ def kalendarz_events_json(request):
             },
         })
 
-    # Historia
+
     history_qs = CzynoscPielegnacyjna.objects.select_related("roslina").filter(
         roslina_id__in=plant_ids, data__range=(start, end))
 
