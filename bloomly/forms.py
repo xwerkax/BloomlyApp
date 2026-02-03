@@ -17,7 +17,6 @@ from .models import (
 # Rejestracja / Profil
 # -----------------------------
 class RejestracjaForm(UserCreationForm):
-    # Dodatkowe pola do rejestracji
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "twoj@email.com"}),
@@ -39,7 +38,6 @@ class RejestracjaForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Bootstrap dla pól
         self.fields["username"].widget.attrs.update({"class": "form-control", "placeholder": "Nazwa użytkownika"})
         self.fields["password1"].widget.attrs.update({"class": "form-control", "placeholder": "Hasło"})
         self.fields["password2"].widget.attrs.update({"class": "form-control", "placeholder": "Powtórz hasło"})
@@ -109,7 +107,6 @@ class RoslinaForm(forms.ModelForm):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            # Ustaw format daty dla istniejących wartości
             if self.instance and self.instance.pk:
                 if self.instance.data_zakupu:
                     self.initial['data_zakupu'] = self.instance.data_zakupu.strftime('%Y-%m-%d')
@@ -130,7 +127,6 @@ class CzynoscForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Ustaw domyślną datę na teraz
         if not self.instance.pk:
             self.fields["data"].initial = timezone.now()
 
@@ -138,7 +134,6 @@ class CzynoscForm(forms.ModelForm):
 class PodlewanieForm(forms.ModelForm):
     class Meta:
         model = CzynoscPielegnacyjna
-        # roślinę, użytkownika i typ ustawimy w widoku
         fields = ["data", "stan_gleby", "ilosc_wody", "notatki"]
         widgets = {
             "data": forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"}),
@@ -151,7 +146,6 @@ class PodlewanieForm(forms.ModelForm):
             "notatki": "Notatki",
         }
 
-    # domyślna wartość „teraz”
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.initial.get("data"):
@@ -184,9 +178,8 @@ class WykonajPrzypomnienieForm(forms.Form):
     def clean_data(self):
         dt = self.cleaned_data["data"]
         from django.utils import timezone
-        # opcjonalna walidacja: nie pozwalaj na przyszłość
-        # if dt > timezone.now():
-        #     raise forms.ValidationError("Data nie może być w przyszłości.")
+        if dt > timezone.now():
+            raise forms.ValidationError("Data nie może być w przyszłości.")
         return dt
 
 # -----------------------------
@@ -217,7 +210,6 @@ class PostForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # 1) Pobierz aktywne kategorie forum
         main_qs = Kategoria.objects.filter(
             typ="forum", aktywna=True, rodzic__isnull=True
         ).order_by("nazwa")
@@ -225,7 +217,6 @@ class PostForm(forms.ModelForm):
             typ="forum", aktywna=True, rodzic__isnull=False
         )
 
-        # 2) Zbuduj choices z optgroups
         choices = []
         for parent in main_qs:
             group = [(parent.pk, f"— {parent.nazwa}")]
@@ -234,12 +225,9 @@ class PostForm(forms.ModelForm):
             choices.append((parent.nazwa, group))
         self.fields["kategoria"].choices = choices
 
-        # 3) BARDZO WAŻNE: ustaw queryset do walidacji (rodzice + dzieci)
         self.fields["kategoria"].queryset = Kategoria.objects.filter(
             typ="forum", aktywna=True
         )
-
-        # (opcjonalnie) initial przy edycji
         if self.instance and getattr(self.instance, "kategoria_id", None):
             self.fields["kategoria"].initial = self.instance.kategoria_id
 
@@ -278,7 +266,7 @@ class BazaRoslinForm(forms.ModelForm):
             "toksyczna_dla_zwierzat",
             "zdjecie_glowne",
         ]
-    # widgets jak w Twojej wersji:
+
         widgets = {
             "nazwa_polska": forms.TextInput(attrs={"class": "form-control"}),
             "nazwa_naukowa": forms.TextInput(attrs={"class": "form-control"}),
