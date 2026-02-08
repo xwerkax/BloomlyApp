@@ -12,5 +12,5 @@ Bloomly is a comprehensive houseplant care support system that learns from your 
 - 💬 Community Forum
 - 📚 Botanical Knowledge Base
 
-### Planned Development
+### Planned Development ( In Progress )
 🌡️ IoT Integration - Automatic monitoring based on an ESP32 board and sensors for soil moisture, temperature, and air humidity (DHT22).
