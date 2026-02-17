@@ -1,6 +1,6 @@
 """
 Zadania Celery dla aplikacji Bloomly
-- Przypomnienia (ONE-OPEN) oparte o predykcję RF
+- Przypomnienia oparte o predykcję 
 - Analiza ML roślin
 - Automatyczne aktualizacje
 """
@@ -13,10 +13,8 @@ from django.db import transaction
 from datetime import timedelta, datetime
 import logging
 
-# Celery
 from celery import shared_task
 
-# Modele
 from .models import (
     Przypomnienie,
     Roslina,
@@ -24,7 +22,6 @@ from .models import (
     AnalizaPielegnacji,
 )
 
-# ML Utils
 from .ml_utils import (
     zaktualizuj_analize_rosliny,
     zastosuj_rekomendacje_ml,
@@ -33,19 +30,13 @@ from .ml_utils import (
     analizuj_wzorce_statystyczne,
 )
 
-# Logger
 logger = logging.getLogger(__name__)
 
-# Godzina, o której „kotwiczymy” przypomnienia (lokalnie)
 REMINDER_HOUR = 9  # 09:00 czasu Europe/Warsaw
 
-# Jakie statusy traktujemy jako „otwarte”
+# Jakie statusy traktuje jako „otwarte”
 OPEN_STATUSES = ("oczekujace", "wyslane")
 
-
-# ============================================
-# POMOCNICZE — ONE-OPEN refresher
-# ============================================
 
 def _tzaware(dt: datetime) -> datetime:
     """Zwraca dt świadomy strefy (lokalny)."""
@@ -55,12 +46,7 @@ def _tzaware(dt: datetime) -> datetime:
 
 
 def _nastepny_termin_podlewania(roslina: Roslina):
-    """
-    Oblicz (data_przypomnienia, meta, zrodlo) bazując na:
-    - ostatnim podlaniu (wpis t),
-    - predykcji RF (fallback: statystyka).
-    Zwraca None, jeśli brak ostatniego podlania.
-    """
+    
     last = (
         CzynoscPielegnacyjna.objects
         .filter(roslina=roslina, typ="podlewanie", wykonane=True)
@@ -70,7 +56,6 @@ def _nastepny_termin_podlewania(roslina: Roslina):
     if not last:
         return None
 
-    # RF → fallback stat
     w = przewidz_czestotliwosc_ml(roslina) or analizuj_wzorce_statystyczne(roslina)
     days = int(w["rekomendowana_czestotliwosc"])
 
@@ -84,12 +69,7 @@ def _nastepny_termin_podlewania(roslina: Roslina):
 
 @shared_task
 def odswiez_przypomnienie_rosliny(roslina_id: int):
-    """
-    Idempotentnie utrzymuje JEDNO otwarte przypomnienie dla rośliny.
-    - Jeśli istnieje otwarte → AKTUALIZUJE datę/treść i re-armuje wysyłkę,
-    - Jeśli nie istnieje → TWORZY jedno,
-    - Jeśli brak danych (brak ostatniego podlewania) → zamyka otwarte.
-    """
+  
     try:
         with transaction.atomic():
             r = Roslina.objects.select_for_update().get(pk=roslina_id, is_active=True)
@@ -100,7 +80,6 @@ def odswiez_przypomnienie_rosliny(roslina_id: int):
             ).order_by("data_przypomnienia")
 
             if not calc:
-                # brak danych → zamknij otwarte
                 if open_qs.exists():
                     open_qs.update(status="anulowane")
                 logger.info(f"[ONE-OPEN] {r.nazwa}: brak ostatniego podlewania – anulowano otwarte.")
@@ -108,7 +87,6 @@ def odswiez_przypomnienie_rosliny(roslina_id: int):
 
             due, meta, zrodlo = calc
             tytul = f"Podlej {r.nazwa}"
-            # krótka, czytelna treść – bez pól, których nie ma w modelu
             tresc = (
                 f"Rekomendacja: za {meta['rekomendowana_czestotliwosc']} dni. "
                 f"Źródło: {zrodlo}."
@@ -116,14 +94,13 @@ def odswiez_przypomnienie_rosliny(roslina_id: int):
 
             if open_qs.exists():
                 pr = open_qs.first()
-                # re-arm: ustaw nową datę i przywróć do 'oczekujące' jeśli była 'wysłane'
                 pr.data_przypomnienia = due
                 pr.tytul = tytul
                 pr.tresc = tresc
                 pr.status = "oczekujace"
                 pr.wyslane = False
                 pr.automatyczne = True
-                pr.interwal_dni = None  # nie powtarzamy „z automatu”
+                pr.interwal_dni = None  
                 pr.save(update_fields=[
                     "data_przypomnienia", "tytul", "tresc",
                     "status", "wyslane", "automatyczne", "interwal_dni"
@@ -167,10 +144,10 @@ def wyslij_email_przypomnienie(przypomnienie_id):
     try:
         pr = Przypomnienie.objects.get(id=przypomnienie_id)
 
-        # Konwersja na czas lokalny
+     
         data_lokalna = timezone.localtime(pr.data_przypomnienia)
 
-        # Oblicz ile dni pozostało
+        
         dni_do = (pr.data_przypomnienia.date() - timezone.now().date()).days
 
         subject = f"🌱 {pr.tytul} - za {dni_do} dni"
@@ -205,7 +182,7 @@ Zespół Bloomly 🌿
             fail_silently=False,
         )
 
-        # Oznacz jako wysłane
+       
         pr.status = "wyslane"
         pr.wyslane = True
         pr.data_wyslania = timezone.now()
@@ -229,7 +206,7 @@ def sprawdz_przypomnienia():
     """
     teraz = timezone.now()
     za_3_dni = teraz + timedelta(days=3)
-    za_3_dni_koniec = za_3_dni + timedelta(hours=1)  # Okno 1h
+    za_3_dni_koniec = za_3_dni + timedelta(hours=1)  
 
     qs = Przypomnienie.objects.filter(
         data_przypomnienia__gte=za_3_dni,
@@ -248,15 +225,12 @@ def sprawdz_przypomnienia():
     logger.info(f"Zaplanowano wysłanie {wyslane} przypomnień (3 dni przed terminem) z {qs.count()} dostępnych")
     return f"Zaplanowano wysłanie {wyslane} przypomnień"
 
-# ============================================
-# PRZYPOMNIENIA - ODSWIEZANIE (zamiast 'generowania w przód')
-# ============================================
+
 
 @shared_task
 def odswiez_przypomnienia_dla_wszystkich():
     """
-    Dzienny refresh: dla każdej aktywnej rośliny utrzymuj JEDNO otwarte przypomnienie
-    (RF → fallback stat). Uruchamiane np. codziennie o 06:00.
+    Dzienny refresh dla każdej aktywnej rośliny.
     """
     rosliny = Roslina.objects.filter(is_active=True).values_list("id", flat=True)
     ok = err = 0
@@ -266,30 +240,20 @@ def odswiez_przypomnienia_dla_wszystkich():
     logger.info(f"[ONE-OPEN] Odświeżono przypomnienia dla {ok}/{len(rosliny)} roślin.")
     return f"Odświeżono {ok}/{len(rosliny)} roślin"
 
-# Zachowaj zgodność nazw z istniejącym harmonogramem (stara nazwa → nowa logika)
 generuj_przypomnienia_dla_wszystkich = odswiez_przypomnienia_dla_wszystkich
 
 
 
 
-@shared_task
-def sprawdz_inteligentne_przypomnienia():
-    """
-    (Zachowane dla zgodności) – tylko „odświeża” przypomnienia RF/stat,
-    bez tworzenia duplikatów. Możesz usunąć to zadanie z harmonogramu,
-    jeśli używasz wyłącznie odswiez_przypomnienia_dla_wszystkich + sprawdz_przypomnienia.
-    """
-    return odswiez_przypomnienia_dla_wszystkich()
+#@shared_task
+#def sprawdz_inteligentne_przypomnienia():
+    #return odswiez_przypomnienia_dla_wszystkich()
 
-
-# ============================================
-# ANALIZA ML - AKTUALIZACJE
-# ============================================
 
 @shared_task
 def analizuj_wszystkie_rosliny():
     """
-    Analizuje wzorce podlewania dla wszystkich roślin. Uruchamiane codziennie o 3:00.
+    Analizuje wzorce podlewania dla wszystkich roślin. 
     """
     rosliny = Roslina.objects.filter(is_active=True)
 
@@ -319,7 +283,7 @@ def analizuj_wszystkie_rosliny():
 @shared_task
 def retrenuj_modele_ml():
     """
-    Retrenuje wszystkie modele ML (np. raz w tygodniu w nocy).
+    Retrenuje wszystkie modele ML.
     """
     logger.info("Rozpoczęcie retrenowania modeli ML...")
 
@@ -338,7 +302,6 @@ def retrenuj_modele_ml():
 def zastosuj_rekomendacje_automatycznie():
     """
     Automatycznie stosuje rekomendacje ML gdzie pewność >= 0.5
-    Uruchamiane np. raz w tygodniu (sobota, 4:00)
     """
     analizy = AnalizaPielegnacji.objects.filter(
         pewnosc_rekomendacji__gte=0.7,
@@ -395,7 +358,7 @@ def test_ml_pipeline():
 
     try:
         rosliny = Roslina.objects.filter(is_active=True)[:5]
-        # Analiza
+   
         for r in rosliny:
             try:
                 zaktualizuj_analize_rosliny(r)
@@ -403,7 +366,7 @@ def test_ml_pipeline():
             except Exception as e:
                 wyniki["bledy"].append(f"Analiza {r.nazwa}: {str(e)}")
 
-        # Trening
+    
         from .ml_utils import trenuj_model_ml
         for r in rosliny:
             try:
@@ -449,5 +412,4 @@ def czyszczenie_starych_przypomnien():
         logger.error(f"Błąd czyszczenia przypomnień: {e}")
         return f"Błąd: {str(e)}"
 
-# alias wstecznej kompatybilności (jeśli masz gdzieś starą nazwę)
 czyszczenie_starych_przypomnie = czyszczenie_starych_przypomnien
