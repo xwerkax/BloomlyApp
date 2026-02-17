@@ -3,10 +3,10 @@ from django.utils.text import slugify
 from django.apps import apps
 
 class Command(BaseCommand):
-    help = "Dodaje podstawowe kategorie forum (idempotentnie)."
+    help = "Dodaje podstawowe kategorie forum."
 
     def handle(self, *args, **options):
-        # Spróbuj wykryć model Kategoria automatycznie
+       
         Kategoria = None
         for model in apps.get_models():
             if model.__name__.lower() == "kategoria":
