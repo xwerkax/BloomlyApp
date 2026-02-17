@@ -8,12 +8,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Tworzenie zadań cyklicznych...')
 
-        # Usuń istniejące zadania Bloomly (jeśli są)
+        
         deleted_tasks = PeriodicTask.objects.filter(name__icontains='Bloomly').delete()
         if deleted_tasks[0] > 0:
             self.stdout.write(f'Usunięto {deleted_tasks[0]} starych zadań')
 
-        # Zadanie 1: Sprawdzaj przypomnienia co godzinę
         schedule_hourly, _ = CrontabSchedule.objects.get_or_create(
             minute='0',
             hour='*',
@@ -32,7 +31,7 @@ class Command(BaseCommand):
         )
         self.stdout.write('✓ Zadanie sprawdzania przypomnień (co godzinę)')
 
-        # Zadanie 2: Generuj przypomnienia codziennie o 8:00
+        
         schedule_daily, _ = CrontabSchedule.objects.get_or_create(
             minute='0',
             hour='8',
@@ -51,7 +50,7 @@ class Command(BaseCommand):
         )
         self.stdout.write('✓ Zadanie generowania przypomnień (8:00 rano)')
 
-        # NOWE Zadanie 3: Analizuj rośliny codziennie o 2:00
+        
         schedule_night, _ = CrontabSchedule.objects.get_or_create(
             minute='0',
             hour='2',
@@ -70,11 +69,11 @@ class Command(BaseCommand):
         )
         self.stdout.write('✓ Zadanie analizy ML (2:00 w nocy)')
 
-        # NOWE Zadanie 4: Zastosuj rekomendacje ML w niedziele o 3:00
+       
         schedule_weekly, _ = CrontabSchedule.objects.get_or_create(
             minute='0',
             hour='3',
-            day_of_week='0',  # Niedziela
+            day_of_week='0',  
             day_of_month='*',
             month_of_year='*',
         )
@@ -90,7 +89,7 @@ class Command(BaseCommand):
         self.stdout.write('✓ Zadanie automatycznego stosowania rekomendacji (niedziela 3:00)')
 
         self.stdout.write(
-            self.style.SUCCESS('\n🎉 Wszystkie zadania cykliczne zostały skonfigurowane!')
+            self.style.SUCCESS('\n Wszystkie zadania cykliczne zostały skonfigurowane!')
         )
 
         self.stdout.write('\nUtworzono zadania:')
