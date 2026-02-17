@@ -23,9 +23,8 @@ logger = logging.getLogger(__name__)
 ML_MODELS_DIR = os.path.join(settings.BASE_DIR, "ml_models")
 os.makedirs(ML_MODELS_DIR, exist_ok=True)
 
-# ZMIANA: obniżony próg minimalny dla ML
-MIN_SAMPLES_FOR_ML = 6  # było 8 - teraz 6
-MIN_R2_FOR_UI = 0.20  # było 0.30 - bardziej tolerancyjne
+MIN_SAMPLES_FOR_ML = 6  
+MIN_R2_FOR_UI = 0.20  
 PRED_MIN, PRED_MAX = 1, 30
 
 
@@ -47,7 +46,7 @@ def _month_to_season(m: int) -> int:
     return (m % 12 + 3) // 3
 
 
-# --- mapowanie stanu gleby + ilość wody (ml) ---
+
 _SOIL_ALIASES = {
     "sucha": {"sucha", "dry", "0"},
     "ok": {"ok", "umiarkowana", "wilgotna", "normalna", "lekko wilgotna", "moist", "1"},
@@ -56,7 +55,7 @@ _SOIL_ALIASES = {
 
 
 def _soil_to_num(val):
-    """Zamień różne reprezentacje stanu gleby na {0,1,2} lub NaN."""
+    
     if val is None:
         return math.nan
     s = str(val).strip().lower()
@@ -83,14 +82,14 @@ def _soil_one_hot(num):
     }
 
 
-# NOWA FUNKCJA: mapowanie ilości wody na kategorię
+
 def _water_category(val):
     """Konwertuje ilość wody na kategorię: low/med/high"""
     if val is None or val == "":
         return None
     s = str(val).strip().lower()
 
-    # Tekstowe wartości
+
     if s in ["low", "mało", "malo", "niska"]:
         return 0
     elif s in ["med", "medium", "średnio", "srednio", "normalna"]:
@@ -98,15 +97,15 @@ def _water_category(val):
     elif s in ["high", "dużo", "duzo", "wysoka"]:
         return 2
 
-    # Numeryczne wartości (ml)
+   
     try:
         ml = float(s.replace(",", "."))
         if ml < 100:
-            return 0  # mało
+            return 0  
         elif ml < 300:
-            return 1  # średnio
+            return 1  
         else:
-            return 2  # dużo
+            return 2 
     except Exception:
         pass
 
@@ -125,18 +124,12 @@ def _water_one_hot(category):
 
 
 def _oblicz_pewnosc_regularnosci(interwaly, srednia, odchylenie):
-    """
-    0..1 – jak bardzo powtarzalne są interwały podlewania.
-    ZMIANA: bardziej tolerancyjna formuła
-    """
+   
     if not interwaly or srednia <= 0:
         return 0.5
 
-    # Współczynnik zmienności (CV)
     cv = odchylenie / max(srednia, 1e-6)
 
-    # Mapowanie CV na pewność (im mniejszy CV, tym lepiej)
-    # CV < 0.3 = bardzo dobre, CV > 1.0 = słabe
     if cv < 0.3:
         pewnosc = 1.0
     elif cv < 0.5:
@@ -154,8 +147,8 @@ def _oblicz_pewnosc_regularnosci(interwaly, srednia, odchylenie):
 def _oblicz_jakosc_podlewania(roslina: Roslina):
     """
     Zwraca:
-      - soil_score:  0..1 (czy podlewasz raczej przy suchej / ok glebie, a nie mokrej)
-      - water_score: 0..1 (spójność ilości wody)
+      - soil_score:  0..1 
+      - water_score: 0..1 
     """
     qs = CzynoscPielegnacyjna.objects.filter(
         roslina=roslina,
@@ -172,11 +165,11 @@ def _oblicz_jakosc_podlewania(roslina: Roslina):
             num = _soil_to_num(s)
             if math.isnan(num):
                 continue
-            if num == 0:  # sucha
+            if num == 0:  
                 soil_vals.append(1.0)
-            elif num == 1:  # ok / wilgotna
+            elif num == 1:  
                 soil_vals.append(0.8)
-            else:  # mokra / przelana
+            else:  
                 soil_vals.append(0.2)
         if soil_vals:
             soil_score = float(sum(soil_vals)) / len(soil_vals)
@@ -190,14 +183,14 @@ def _oblicz_jakosc_podlewania(roslina: Roslina):
 
     water_score = 0.5
     if len(water_cats) >= 3:
-        # Sprawdź czy użytkownik jest konsekwentny w wyborze ilości
+        
         unique_cats = len(set(water_cats))
         if unique_cats == 1:
-            water_score = 1.0  # zawsze ta sama ilość
+            water_score = 1.0  
         elif unique_cats == 2:
-            water_score = 0.7  # 2 wartości
+            water_score = 0.7  
         else:
-            water_score = 0.5  # różnie
+            water_score = 0.5 
 
     return {
         "soil_score": soil_score,
@@ -205,9 +198,7 @@ def _oblicz_jakosc_podlewania(roslina: Roslina):
     }
 
 
-# -----------------------------------
-# NOWA FUNKCJA: Ekstrakcja dodatkowych cech
-# -----------------------------------
+
 def _extract_advanced_features(roslina: Roslina, current_date):
     """
     Dodatkowe cechy kontekstowe, które mogą poprawić predykcję:
@@ -218,20 +209,19 @@ def _extract_advanced_features(roslina: Roslina, current_date):
     podlewania = list(
         CzynoscPielegnacyjna.objects.filter(
             roslina=roslina, typ="podlewanie", wykonane=True
-        ).order_by("-data")[:5]  # ostatnie 5 podlań
+        ).order_by("-data")[:5]  
     )
 
     features = {}
 
-    # Dni od ostatniego podlewania
+
     if podlewania:
         last = podlewania[0]
         days_since = (current_date.date() - last.data.date()).days
-        features['days_since_last'] = min(days_since, 60)  # cap at 60
+        features['days_since_last'] = min(days_since, 60)  
     else:
         features['days_since_last'] = 0
 
-    # Trend (czy interwały rosną czy maleją)
     if len(podlewania) >= 3:
         recent_intervals = []
         for i in range(len(podlewania) - 1):
@@ -240,13 +230,13 @@ def _extract_advanced_features(roslina: Roslina, current_date):
                 recent_intervals.append(d)
 
         if len(recent_intervals) >= 2:
-            # Prosty trend: porównaj ostatni z poprzednim
+           
             if recent_intervals[0] > recent_intervals[-1]:
-                features['trend'] = 1.0  # rosnący
+                features['trend'] = 1.0  
             elif recent_intervals[0] < recent_intervals[-1]:
-                features['trend'] = -1.0  # malejący
+                features['trend'] = -1.0  
             else:
-                features['trend'] = 0.0  # stabilny
+                features['trend'] = 0.0  
         else:
             features['trend'] = 0.0
     else:
@@ -259,19 +249,17 @@ def _extract_advanced_features(roslina: Roslina, current_date):
 # Jednowierszowe cechy do inferencji
 # -----------------------------------
 def _build_one_row_features(roslina: Roslina, dt: timezone.datetime) -> pd.DataFrame:
-    """
-    ZMIANA: Dodano więcej cech i kategoryczne kodowanie wody
-    """
+    
     dow = dt.weekday()
     month = dt.month
     hour = dt.hour
     season = _month_to_season(month)
 
-    # meta rośliny
+
     kat = roslina.kategoria or "unknown"
     trud = roslina.poziom_trudnosci or "unknown"
 
-    # ostatni wpis podlewania
+   
     last = (
         CzynoscPielegnacyjna.objects.filter(
             roslina=roslina, typ="podlewanie", wykonane=True
@@ -283,11 +271,9 @@ def _build_one_row_features(roslina: Roslina, dt: timezone.datetime) -> pd.DataF
     soil_num = _soil_to_num(getattr(last, "stan_gleby", None) if last else None)
     soil_oh = _soil_one_hot(soil_num)
 
-    # ZMIANA: kategoryczne kodowanie wody zamiast ml
     water_cat = _water_category(getattr(last, "ilosc_wody", None) if last else None)
     water_oh = _water_one_hot(water_cat)
 
-    # NOWE: dodatkowe cechy
     advanced = _extract_advanced_features(roslina, dt)
 
     base = pd.DataFrame(
@@ -319,9 +305,6 @@ def _build_one_row_features(roslina: Roslina, dt: timezone.datetime) -> pd.DataF
     return base
 
 
-# -----------------------------------
-# Przygotowanie danych (features/target)
-# -----------------------------------
 def przygotuj_dane_treningowe(roslina: Roslina):
     """
     ZMIANA: Dodano więcej cech i outlier detection
@@ -348,7 +331,7 @@ def przygotuj_dane_treningowe(roslina: Roslina):
         if inter <= 0 or inter > 60:
             continue
 
-        # Rolling interwałów
+     
         if i >= 1:
             hist_intervals = []
             for j in range(1, i + 1):
@@ -377,17 +360,16 @@ def przygotuj_dane_treningowe(roslina: Roslina):
         water_cat = _water_category(getattr(cur, "ilosc_wody", None))
         water_oh = _water_one_hot(water_cat)
 
-        # meta
         kat = roslina.kategoria or "unknown"
         trud = roslina.poziom_trudnosci or "unknown"
 
-        # NOWE: dni od poprzedniego podlewania
+  
         if i > 0:
             days_since = (cur.data.date() - podlewania[i - 1].data.date()).days
         else:
             days_since = 0
 
-        # NOWE: trend
+    
         if len(hist_intervals) >= 2:
             if hist_intervals[-1] > hist_intervals[0]:
                 trend = 1.0
@@ -418,7 +400,7 @@ def przygotuj_dane_treningowe(roslina: Roslina):
         rows.append(row)
         intervals.append(inter)
 
-    if len(rows) < 5:  # było 6, teraz 5
+    if len(rows) < 5:  
         logger.debug(
             f"Za mało prawidłowych par (t->t+1) dla {roslina.nazwa}: {len(rows)}"
         )
@@ -427,7 +409,7 @@ def przygotuj_dane_treningowe(roslina: Roslina):
     X = pd.DataFrame(rows)
     y = pd.Series(intervals, name="interwal")
 
-    # ZMIANA: Usuwanie outlierów (IQR method)
+ 
     Q1 = y.quantile(0.25)
     Q3 = y.quantile(0.75)
     IQR = Q3 - Q1
@@ -442,7 +424,6 @@ def przygotuj_dane_treningowe(roslina: Roslina):
         logger.debug(f"Za mało danych po usunięciu outlierów: {len(X)}")
         return None
 
-    # Wypełnianie braków
     for c in ["roll_mean_3", "roll_std_3", "roll_med_3"]:
         if c in X.columns:
             if X[c].notna().any():
@@ -460,9 +441,6 @@ def przygotuj_dane_treningowe(roslina: Roslina):
     return X, y
 
 
-# -----------------------------------
-# ZMIANA: Nowa funkcja treningu z cross-validation
-# -----------------------------------
 def trenuj_model_ml(roslina: Roslina, use_cv=True):
     """
     Trenuje model z walidacją krzyżową (jeśli use_cv=True)
@@ -473,9 +451,8 @@ def trenuj_model_ml(roslina: Roslina, use_cv=True):
 
     X, y = data
 
-    # ZMIANA: wybór modelu na podstawie liczby próbek
     if len(X) < 15:
-        # Dla małych zbiorów: prostszy model
+        
         model = GradientBoostingRegressor(
             n_estimators=50,
             max_depth=3,
@@ -486,7 +463,7 @@ def trenuj_model_ml(roslina: Roslina, use_cv=True):
         model_type = "GB"
         logger.info(f"Używam GradientBoosting dla {roslina.nazwa} ({len(X)} próbek)")
     else:
-        # Dla większych zbiorów: Random Forest
+       
         model = RandomForestRegressor(
             n_estimators=200,
             max_depth=6,
@@ -498,7 +475,7 @@ def trenuj_model_ml(roslina: Roslina, use_cv=True):
         model_type = "RF"
         logger.info(f"Używam RandomForest dla {roslina.nazwa} ({len(X)} próbek)")
 
-    # ZMIANA: Cross-validation dla małych zbiorów
+
     if use_cv and len(X) >= 8:
         kf = KFold(n_splits=min(5, len(X)), shuffle=True, random_state=42)
         cv_scores = cross_val_score(
@@ -517,16 +494,13 @@ def trenuj_model_ml(roslina: Roslina, use_cv=True):
         cv_mae = None
         cv_mae_std = None
 
-    # Trening na całym zbiorze
     model.fit(X, y)
 
-    # Ewaluacja
     y_pred = model.predict(X)
     r2 = r2_score(y, y_pred)
     mae = mean_absolute_error(y, y_pred)
     rmse = float(np.sqrt(mean_squared_error(y, y_pred)))
 
-    # ZMIANA: Adjusted R² dla małych zbiorów
     n = len(X)
     p = X.shape[1]
     if n > p + 1:
@@ -566,9 +540,6 @@ def trenuj_model_ml(roslina: Roslina, use_cv=True):
     return model_data
 
 
-# -----------------------------------
-# Predykcja (inferencja)
-# -----------------------------------
 def przewidz_czestotliwosc_ml(roslina: Roslina, teraz=None):
     """
     Przewiduje optymalną częstotliwość podlewania używając wytrenowanego modelu.
@@ -614,7 +585,6 @@ def przewidz_czestotliwosc_ml(roslina: Roslina, teraz=None):
     pred = float(model_data["model"].predict(X_pred)[0])
     pred = int(round(max(PRED_MIN, min(PRED_MAX, pred))))
 
-    # ZMIANA: Użyj adjusted R² jako pewność
     pewnosc = model_data.get("adj_score", model_data.get("score", 0.0))
 
     logger.info(
@@ -759,9 +729,7 @@ def analizuj_pory_podlewania(roslina: Roslina):
     }
 
 
-# -----------------------------------
-# Aktualizacja analizy - POPRAWIONA
-# -----------------------------------
+
 def zaktualizuj_analize_rosliny(roslina):
     """
     ZMIANA: Zaktualizowana logika agregacji pewności + zapis nowych pól
@@ -782,7 +750,7 @@ def zaktualizuj_analize_rosliny(roslina):
         wzorce = analizuj_wzorce_statystyczne(roslina)
         logger.info(f"Używam analizy statystycznej dla {roslina.nazwa}")
 
-    # ZMIANA: Bardziej konserwatywna agregacja pewności
+    
     if wynik_ml and wynik_ml.get("n_samples", 0) >= MIN_SAMPLES_FOR_ML and wynik_ml.get("pewnosc", 0) > MIN_R2_FOR_UI:
         pewnosc_modelu = float(wynik_ml.get("pewnosc", 0.5))
     else:
@@ -801,11 +769,11 @@ def zaktualizuj_analize_rosliny(roslina):
     water_score = jakosc["water_score"]
     biome_score = 0.5 * soil_score + 0.5 * water_score
 
-    # ZMIANA: Większa waga dla jakości modelu
+
     pewnosc_laczna = (
-            0.5 * pewnosc_modelu +  # było 0.4
-            0.3 * reg_score +  # było 0.35
-            0.2 * biome_score  # było 0.25
+            0.5 * pewnosc_modelu +  
+            0.3 * reg_score +  
+            0.2 * biome_score  
     )
     pewnosc_laczna = float(max(0.0, min(1.0, pewnosc_laczna)))
 
@@ -816,7 +784,6 @@ def zaktualizuj_analize_rosliny(roslina):
     wzorce["pewnosc_laczna"] = round(pewnosc_laczna, 2)
     wzorce["pewnosc"] = wzorce["pewnosc_laczna"]
 
-    # Zapis do bazy
     analiza, created = AnalizaPielegnacji.objects.get_or_create(
         roslina=roslina, uzytkownik=roslina.wlasciciel
     )
@@ -834,16 +801,15 @@ def zaktualizuj_analize_rosliny(roslina):
     analiza.rekomendowana_czestotliwosc = wzorce['rekomendowana_czestotliwosc']
     analiza.pewnosc_rekomendacji = wzorce.get('pewnosc', 0.5)
 
-    # ✅ NOWE - Zapis typu modelu
     analiza.typ_modelu = wzorce.get('model_type', 'RF')
 
-    # ✅ NOWE - Zapis metryk ML
+
     analiza.r2_score = wzorce.get('r2', None)
     analiza.mae = wzorce.get('mae', None)
     analiza.rmse = wzorce.get('rmse', None)
     analiza.cv_mae = wzorce.get('cv_mae', None)
 
-    # ✅ NOWE - Składowe pewności
+
     analiza.pewnosc_model = wzorce.get('pewnosc_modelu', 0.0)
     analiza.pewnosc_regularnosc = wzorce.get('pewnosc_regularnosci', 0.0)
     analiza.pewnosc_biologia = biome_score
