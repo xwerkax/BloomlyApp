@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = 'Trenuje modele ML dla wszystkich roślin'
 
     def handle(self, *args, **options):
-        self.stdout.write('🤖 Trenowanie modeli ML...\n')
+        self.stdout.write('Trenowanie modeli ML...\n')
 
         wynik = retrenuj_wszystkie_modele()
 
