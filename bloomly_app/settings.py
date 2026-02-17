@@ -12,16 +12,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import sys
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-egu12h19(ex9cdz@cy6x(job0gs%&rju7s(g5l(^zq5-uc460c'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -90,8 +85,6 @@ else:
         }
     }
 
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -119,14 +112,14 @@ USE_TZ = True
 TIME_ZONE = 'Europe/Warsaw'
 
 # ============================================
-# STATIC FILES (CSS, JavaScript, Images)
+# STATIC FILES 
 # ============================================
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # ============================================
-# MEDIA FILES (Uploaded files)
+# MEDIA FILES 
 # ============================================
 
 MEDIA_URL = '/media/'
@@ -209,19 +202,19 @@ LOGGING = {
         'file_ml': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'ml_debug.log',  # ✓ POPRAWIONE
+            'filename': BASE_DIR / 'logs' / 'ml_debug.log',  
             'formatter': 'verbose',
         },
         'file_celery': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'celery.log',  # ✓ DODANE
+            'filename': BASE_DIR / 'logs' / 'celery.log', 
             'formatter': 'verbose',
         },
         'file_django': {
             'level': 'WARNING',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',  # ✓ DODANE
+            'filename': BASE_DIR / 'logs' / 'django.log',  
             'formatter': 'verbose',
         },
     },
